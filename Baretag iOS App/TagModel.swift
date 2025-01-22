@@ -7,12 +7,13 @@
 
 import Foundation
 
-struct TagLocation: Decodable, Identifiable {
+struct TagLocation: Decodable, Identifiable, Equatable {
     let id: String
     let name: String
     let latitude: Double
     let longitude: Double
 }
+
 
 func copyJSONToDocuments() -> URL? {
     let fileManager = FileManager.default
