@@ -10,6 +10,7 @@ import MapKit
 
 struct MapViewRepresentable: UIViewRepresentable {
     @Binding var centerCoordinate: CLLocationCoordinate2D
+    @Binding var isLocked: Bool
 
     class Coordinator: NSObject, MKMapViewDelegate {
         var parent: MapViewRepresentable
@@ -18,38 +19,11 @@ struct MapViewRepresentable: UIViewRepresentable {
             self.parent = parent
         }
 
-        // Custom annotation view
-        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-            guard !(annotation is MKUserLocation) else { return nil }
-
-            let identifier = "TagAnnotation"
-            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
-
-            if annotationView == nil {
-                annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
-                annotationView?.canShowCallout = true
-
-                // Custom annotation view
-                let circleView = UIView()
-                circleView.backgroundColor = UIColor.blue.withAlphaComponent(0.7)
-                circleView.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
-                circleView.layer.cornerRadius = 20
-
-                annotationView?.addSubview(circleView)
-
-                // Optional label
-                let label = UILabel()
-                label.text = "T"
-                label.textColor = .white
-                label.font = UIFont.boldSystemFont(ofSize: 14)
-                label.textAlignment = .center
-                label.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
-                circleView.addSubview(label)
-            } else {
-                annotationView?.annotation = annotation
+        // Track user interaction
+        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            if !parent.isLocked {
+                print("User moved the map. Lock disabled.")
             }
-
-            return annotationView
         }
     }
 
@@ -64,19 +38,17 @@ struct MapViewRepresentable: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: MKMapView, context: Context) {
-        // Create a region with a smaller span for zooming
-        let zoomRegion = MKCoordinateRegion(
-            center: centerCoordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.0025, longitudeDelta: 0.0025) // Smaller span for closer zoom
-        )
+        // Recenter the map only when locked
+        if isLocked {
+            let zoomRegion = MKCoordinateRegion(
+                center: centerCoordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // Adjust zoom level
+            )
+            uiView.setRegion(zoomRegion, animated: true)
+        }
 
-        // Set the map's region with animation
-        uiView.setRegion(zoomRegion, animated: true)
-
-        // Remove existing annotations
-        uiView.removeAnnotations(uiView.annotations)
-
-        // Add a new custom annotation
+        // Always ensure the annotation stays at the tag location
+        uiView.removeAnnotations(uiView.annotations) // Remove old annotations
         let annotation = MKPointAnnotation()
         annotation.coordinate = centerCoordinate
         annotation.title = "Tag Location"
