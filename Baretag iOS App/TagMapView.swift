@@ -20,16 +20,19 @@ struct TagMapView: View {
     )
     @State private var tagLocation: TagLocation?
 
+    // Timer to refresh data every 5 seconds
+    private let updateInterval: TimeInterval = 5.0
+    private var timer = Timer.publish(every: 5.0, on: .main, in: .common).autoconnect()
+
     var body: some View {
         VStack {
             if let tag = tagLocation {
-                // Map using MapContentBuilder with an Annotation
                 Map{
+                    // Add the annotation for the tag location
                     Annotation(
-                        "tag",
+                        tag.id,
                         coordinate: CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
                     ) {
-                        // Circle as annotation marker
                         Circle()
                             .fill(Color.blue.opacity(0.7))
                             .frame(width: 40, height: 40)
@@ -41,7 +44,7 @@ struct TagMapView: View {
                     }
                 }
                 .onAppear {
-                    // Center map on the tag's location
+                    // Center the map on the tag's location
                     region.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
                 }
             } else {
@@ -50,8 +53,19 @@ struct TagMapView: View {
             }
         }
         .onAppear {
-            // Load tag data
-            tagLocation = loadTagData()
+            loadData() // Load initial data
         }
+        .onReceive(timer) { _ in
+            loadData() // Refresh data at each interval
+        }
+    }
+
+    private func loadData() {
+        guard let tag = loadTagData() else {
+            print("❌ Failed to load tag data")
+            return
+        }
+        tagLocation = tag
+        print("✅ Updated tag location: \(tag)")
     }
 }
