@@ -12,49 +12,20 @@ struct ContentView: View {
     @State private var locationText: String = "Location: Not yet fetched"
     
     var body: some View {
-        VStack(spacing: 20) {
-            
-            // Fetch and Forward Location Button
-            Button(action: {
-                locationBluetoothManager.fetchLocationAndSend()
-            }) {
-                Text("Fetch Location & Send via BLE")
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-            }
-            
-            
-            // Progress Display
-            RoundedRectangle(cornerRadius: 15)
-                .fill(Color.gray.opacity(0.2))
-                .frame(height: 80)
-                .overlay(
-                    Text(locationBluetoothManager.geo_location ?? "Fetching Location")
-                        .foregroundColor(.black)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                )
-                .padding(.horizontal)
-            
-            // Display the current status
-            Text(locationBluetoothManager.status)
-                .font(.body)
-                .foregroundColor(.gray)
-                .padding(.top, 10)
-        }
-        .padding()
-        
-        // Updated UI on change
-        .onChange(of: locationBluetoothManager.latitude) { newValue, oldValue in
-            // Update location text when latitude changes
-            if let latitude = newValue,
-               let longitude = locationBluetoothManager.longitude {
-                locationText = "Lat: \(latitude), Lon: \(longitude)"
+            TabView {
+                // Tab 1: Fetch Location and Send via BLE
+                AnchorLocatorView()
+                    .tabItem {
+                        Label("Location", systemImage: "location")
+                    }
+
+                // Tab 2: Display Received Data
+                TagMapView()
+                    .tabItem {
+                        Label("Map", systemImage: "map")
+                    }
             }
         }
-    }
 }
 
 #Preview {
