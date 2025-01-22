@@ -14,7 +14,6 @@ struct TagLocation: Decodable, Identifiable, Equatable {
     let longitude: Double
 }
 
-
 func copyJSONToDocuments() -> URL? {
     let fileManager = FileManager.default
     let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
