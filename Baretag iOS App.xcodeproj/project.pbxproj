@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F6E8950B2D40B41600B80A2D /* README.MD in Resources */ = {isa = PBXBuildFile; fileRef = F6E895092D40B41000B80A2D /* README.MD */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		F65658122D4098F500FDBEF6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		F65658012D4098F300FDBEF6 /* Baretag iOS App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Baretag iOS App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F65658112D4098F500FDBEF6 /* Baretag iOS AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Baretag iOS AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F656581B2D4098F500FDBEF6 /* Baretag iOS AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Baretag iOS AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F6E895092D40B41000B80A2D /* README.MD */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.MD; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +84,7 @@
 				F65658142D4098F500FDBEF6 /* Baretag iOS AppTests */,
 				F656581E2D4098F500FDBEF6 /* Baretag iOS AppUITests */,
 				F65658022D4098F300FDBEF6 /* Products */,
+				F6E895092D40B41000B80A2D /* README.MD */,
 			);
 			sourceTree = "<group>";
 		};
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F6E8950B2D40B41600B80A2D /* README.MD in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

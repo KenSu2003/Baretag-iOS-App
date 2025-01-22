@@ -14,29 +14,46 @@ struct TagLocation: Decodable, Identifiable {
     let longitude: Double
 }
 
-func loadTagData() -> TagLocation? {
-    // Check if the file URL exists
-    guard let url = Bundle.main.url(forResource: "tagData", withExtension: "json") else {
-        print("❌ JSON file not found in the bundle")
-        return nil
+func copyJSONToDocuments() -> URL? {
+    let fileManager = FileManager.default
+    let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+    let destinationURL = documentsURL.appendingPathComponent("tagData.json")
+
+    // Only copy the file if it doesn't already exist
+    if !fileManager.fileExists(atPath: destinationURL.path) {
+        guard let bundleURL = Bundle.main.url(forResource: "tagData", withExtension: "json") else {
+            print("❌ Failed to locate tagData.json in bundle")
+            return nil
+        }
+
+        do {
+            try fileManager.copyItem(at: bundleURL, to: destinationURL)
+            print("✅ Copied tagData.json to Documents directory")
+        } catch {
+            print("❌ Failed to copy tagData.json: \(error)")
+            return nil
+        }
+    } else {
+        print("✅ tagData.json already exists in Documents directory")
     }
 
-    print("✅ JSON file URL: \(url)")
-
-    // Attempt to read the file contents
-    guard let data = try? Data(contentsOf: url) else {
-        print("❌ Failed to load data from JSON file")
-        return nil
-    }
-
-    print("✅ JSON file loaded successfully")
-
-    // Attempt to decode the JSON into a TagLocation object
-    guard let tag = try? JSONDecoder().decode(TagLocation.self, from: data) else {
-        print("❌ Failed to decode JSON")
-        return nil
-    }
-
-    print("✅ JSON decoded successfully: \(tag)")
-    return tag
+    return destinationURL
 }
+
+
+
+func loadTagData() -> TagLocation? {
+    let customPath = "/Users/kensu/Documents/tagData.json"
+    let url = URL(fileURLWithPath: customPath)
+    
+    do {
+        let data = try Data(contentsOf: url)
+        let tag = try JSONDecoder().decode(TagLocation.self, from: data)
+        print("✅ JSON decoded successfully: \(tag)")
+        return tag
+    } catch {
+        print("❌ Failed to load or decode JSON: \(error)")
+        return nil
+    }
+}
+
