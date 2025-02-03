@@ -5,6 +5,8 @@
 //  Created by Ken Su on 11/11/24.
 //
 
+// https://stackoverflow.com/questions/56514998/find-all-available-images-for-imagesystemname
+
 import SwiftUI
 
 struct ContentView: View {
@@ -16,7 +18,7 @@ struct ContentView: View {
                 // Tab 1: Fetch Location and Send via BLE
                 AnchorLocatorView()
                     .tabItem {
-                        Label("Location", systemImage: "location")
+                        Label("Localizer", systemImage: "signpost.right.and.left.circle.fill")
                     }
 
                 // Tab 2: Display Received Data
@@ -28,7 +30,7 @@ struct ContentView: View {
                 //Tab 3: Precise Relative Location
                 LocationView()
                     .tabItem{
-                        Label("Precise", systemImage: "circle")
+                        Label("Precise GPS", systemImage: "airtag")
                     }
             }
         }
