@@ -9,7 +9,7 @@ import CoreGraphics
 import Foundation
 
 func convertGPSToPlane(latitude: Double, longitude: Double, anchors: [Anchor]) -> CGPoint {
-    // Dynamically calculate bounds with a small buffer to prevent clamping issues
+    // Determine min and max bounds with a buffer
     let minLatitude = (anchors.map { $0.latitude }.min() ?? 0.0) - 0.0001
     let maxLatitude = (anchors.map { $0.latitude }.max() ?? 1.0) + 0.0001
     let minLongitude = (anchors.map { $0.longitude }.min() ?? 0.0) - 0.0001
@@ -17,23 +17,24 @@ func convertGPSToPlane(latitude: Double, longitude: Double, anchors: [Anchor]) -
 
     print("📏 Bounding Box - minLat: \(minLatitude), maxLat: \(maxLatitude), minLong: \(minLongitude), maxLong: \(maxLongitude)")
 
-    // Normalize latitude and longitude within the dynamic bounds
+    // Normalize lat/lon within bounds
     let normalizedX = CGFloat((longitude - minLongitude) / (maxLongitude - minLongitude))
     let normalizedY = CGFloat((latitude - minLatitude) / (maxLatitude - minLatitude))
 
-    // Clamp normalized values to ensure they stay within [0, 1]
-    let clampedX = min(max(normalizedX, 0), 1)
-    let clampedY = min(max(normalizedY, 0), 1)
+    // Scale to a larger plane and add an offset to the Y-axis
+    let planeWidth: CGFloat = 800  // Increased plane width for better spread
+    let planeHeight: CGFloat = 800
+    let yOffset: CGFloat = 100  // Offset to adjust vertical placement
 
-    print("🧭 Normalized (x, y): (\(normalizedX), \(normalizedY))")
-    print("🔒 Clamped (x, y): (\(clampedX), \(clampedY))")
+    let x = normalizedX * planeWidth
+    let y = (normalizedY * planeHeight) + yOffset
 
-    // Scale to the plane (0 to 100)
-    let x = clampedX * 100
-    let y = clampedY * 100
+    print("🧭 Normalized (x, y): (\(normalizedX), \(normalizedY)) -> Plane (x, y): (\(x), \(y))")
 
     return CGPoint(x: x, y: y)
 }
+
+
 
 func loadAnchorsFromJSON() -> [Anchor] {
     let customPath = "/Users/kensu/Documents/anchors.json"  // Manually specify the local path

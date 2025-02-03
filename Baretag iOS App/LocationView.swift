@@ -10,24 +10,33 @@ struct LocationView: View {
             let screenWidth = geometry.size.width
             let screenHeight = geometry.size.height
 
-            let scaleX = screenWidth / 100
-            let scaleY = screenHeight / 100
+            let scaleX = screenWidth / 800  // Match plane width
+            let scaleY = screenHeight / 800  // Match plane height
+
 
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
 
                 // Draw anchors as white rectangles
                 ForEach(anchors) { anchor in
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: 20, height: 20)
-                        .position(
-                            CGPoint(
-                                x: anchor.position.x * scaleX,
-                                y: anchor.position.y * scaleY
-                            )
+                    VStack {
+                        Rectangle()
+                            .fill(Color.white)
+                            .frame(width: 20, height: 20)
+                        
+                        // Display the anchor name below the rectangle
+                        Text(anchor.name)
+                            .foregroundColor(.white)
+                            .font(.caption)
+                    }
+                    .position(
+                        CGPoint(
+                            x: anchor.position.x * scaleX,
+                            y: anchor.position.y * scaleY
                         )
+                    )
                 }
+
 
                 // Draw the tag's location as a red circle
                 Circle()
