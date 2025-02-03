@@ -24,6 +24,12 @@ struct ContentView: View {
                     .tabItem {
                         Label("Map", systemImage: "map")
                     }
+                
+                //Tab 3: Precise Relative Location
+                LocationView()
+                    .tabItem{
+                        Label("Precise", systemImage: "circle")
+                    }
             }
         }
 }
