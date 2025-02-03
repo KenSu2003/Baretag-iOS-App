@@ -8,31 +8,34 @@
 import CoreGraphics
 import Foundation
 
-func convertGPSToPlane(latitude: Double, longitude: Double, anchors: [Anchor]) -> CGPoint {
-    // Determine min and max bounds with a buffer
-    let minLatitude = (anchors.map { $0.latitude }.min() ?? 0.0) - 0.0001
-    let maxLatitude = (anchors.map { $0.latitude }.max() ?? 1.0) + 0.0001
-    let minLongitude = (anchors.map { $0.longitude }.min() ?? 0.0) - 0.0001
-    let maxLongitude = (anchors.map { $0.longitude }.max() ?? 1.0) + 0.0001
+func convertGPSToPlane(latitude: Double, longitude: Double) -> CGPoint {
+    // Define bounding box (use real-world GPS min/max for your anchors)
+    let minLat = 42.39330456034727
+    let maxLat = 42.39367166929857
+    let minLong = -72.52969898450374
+    let maxLong = -72.52874061779049
 
-    print("📏 Bounding Box - minLat: \(minLatitude), maxLat: \(maxLatitude), minLong: \(minLongitude), maxLong: \(maxLongitude)")
+    let normalizedX = CGFloat((longitude - minLong) / (maxLong - minLong))
+    let normalizedY = CGFloat((latitude - minLat) / (maxLat - minLat))
 
-    // Normalize lat/lon within bounds
-    let normalizedX = CGFloat((longitude - minLongitude) / (maxLongitude - minLongitude))
-    let normalizedY = CGFloat((latitude - minLatitude) / (maxLatitude - minLatitude))
+    let planeX = normalizedX * 100  // Scaling to match plane coordinates
+    let planeY = normalizedY * 100
 
-    // Scale to a larger plane and add an offset to the Y-axis
-    let planeWidth: CGFloat = 800  // Increased plane width for better spread
-    let planeHeight: CGFloat = 800
-    let yOffset: CGFloat = 100  // Offset to adjust vertical placement
-
-    let x = normalizedX * planeWidth
-    let y = (normalizedY * planeHeight) + yOffset
-
-    print("🧭 Normalized (x, y): (\(normalizedX), \(normalizedY)) -> Plane (x, y): (\(x), \(y))")
-
-    return CGPoint(x: x, y: y)
+    return CGPoint(x: planeX, y: planeY)
 }
+
+
+
+
+func calculateBoundingBox(from anchors: [Anchor]) -> (minLat: Double, maxLat: Double, minLong: Double, maxLong: Double) {
+    let minLat = anchors.map { $0.latitude }.min() ?? 0.0
+    let maxLat = anchors.map { $0.latitude }.max() ?? 1.0
+    let minLong = anchors.map { $0.longitude }.min() ?? 0.0
+    let maxLong = anchors.map { $0.longitude }.max() ?? 1.0
+
+    return (minLat, maxLat, minLong, maxLong)
+}
+
 
 
 

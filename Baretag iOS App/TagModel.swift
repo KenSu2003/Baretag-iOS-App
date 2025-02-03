@@ -7,12 +7,20 @@
 
 import Foundation
 
-struct TagLocation: Decodable, Identifiable, Equatable {
+import Foundation
+import CoreGraphics
+
+struct TagLocation: Codable, Equatable {
     let id: String
     let name: String
     let latitude: Double
     let longitude: Double
+    let x: CGFloat  // UWB plane x-coordinate
+    let y: CGFloat  // UWB plane y-coordinate
+
+    // Automatic conformance works as long as all properties conform to `Equatable`
 }
+
 
 func copyJSONToDocuments() -> URL? {
     let fileManager = FileManager.default

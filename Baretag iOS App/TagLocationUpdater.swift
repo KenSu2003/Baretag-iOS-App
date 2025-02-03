@@ -1,66 +1,71 @@
+//
+//  LocationUtils.swift
+//  Baretag iOS App
+//
+//  Created by Ken Su on 2/3/25.
+//
+
 import Foundation
-import CoreLocation
-import SwiftUI
+import Combine
+import CoreGraphics
 
 class TagLocationUpdater: ObservableObject {
-    @Published var tagPlaneLocation: CGPoint = .zero  // Holds the tag's converted (x, y) location
+    @Published var tagPlaneLocation: CGPoint = .zero  // UWB plane location
+    @Published var gpsLatitude: Double = 0.0          // GPS latitude
+    @Published var gpsLongitude: Double = 0.0         // GPS longitude
     
-    private let useLocalFiles = true  // Toggle between local or server files
-    private let localTagDataPath = "/Users/kensu/Documents/tagData.json"  // Local path to tagData.json
+    private let localTagDataPath = "/Users/kensu/Documents/tagData.json"
     private var timer: Timer?
-
+    
     init() {
         startPeriodicUpdates()
     }
-
+    
     func startPeriodicUpdates() {
-        // Periodically fetch the tag data every 5 seconds
         timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            self.fetchLocalOrServerTagDataAndConvert()
+            self.fetchTagDataAndUpdate()
         }
     }
-
-    deinit {
-        timer?.invalidate()
-    }
-
-    private func fetchLocalOrServerTagDataAndConvert() {
-        if useLocalFiles {
-            if let localTagLocation = fetchTagDataFromLocalFile() {
-                print("✅ Loaded tag location from local file")
-                self.convertAndUpdate(tagLocation: localTagLocation)
-            } else {
-                print("❌ Local file not available or failed to load.")
-            }
-        }
-    }
-
-    private func fetchTagDataFromLocalFile() -> TagLocation? {
-        let fileURL = URL(fileURLWithPath: localTagDataPath)
-
+    
+    private func fetchTagDataAndUpdate() {
         do {
-            let data = try Data(contentsOf: fileURL)
-            let tagLocation = try JSONDecoder().decode(TagLocation.self, from: data)
+            let data = try Data(contentsOf: URL(fileURLWithPath: localTagDataPath))
+            let tagLocation = try JSONDecoder().decode(UWBTagLocation.self, from: data)
             print("✅ Loaded tag location from: \(localTagDataPath)")
-            return tagLocation
+            
+            DispatchQueue.main.async {
+                self.tagPlaneLocation = CGPoint(x: tagLocation.x, y: tagLocation.y)
+                self.gpsLatitude = tagLocation.latitude
+                self.gpsLongitude = tagLocation.longitude
+            }
         } catch {
-            print("❌ Error loading or decoding tagData.json from: \(localTagDataPath) — \(error)")
-            return nil
+            print("❌ Error loading tagData.json: \(error)")
         }
     }
-
-    private func convertAndUpdate(tagLocation: TagLocation) {
+    
+    
+    private func convertAndUpdate(tagLocation: UWBTagLocation) {
         let anchors = loadAnchorsFromJSON()
-
+        
         guard !anchors.isEmpty else {
             print("❌ No anchors available for conversion")
             return
         }
-
-        let convertedPoint = convertGPSToPlane(latitude: tagLocation.latitude, longitude: tagLocation.longitude, anchors: anchors)
-        print("🌍 Tag GPS Location: (\(tagLocation.latitude), \(tagLocation.longitude))")
-        print("📍 Converted to (x, y): \(convertedPoint)")
-
+        
+        // Use UWB coordinates directly or fall back to GPS conversion
+        let useUWB = true  // Toggle this if needed
+        let convertedPoint: CGPoint
+        
+        if useUWB {
+            // Use UWB (x, y) directly
+            convertedPoint = CGPoint(x: tagLocation.x, y: tagLocation.y)
+        } else {
+            // Use GPS to plane conversion
+            convertedPoint = convertGPSToPlane(latitude: tagLocation.latitude, longitude: tagLocation.longitude)
+        }
+        
+        print("🌍 Tag Location: (x: \(tagLocation.x), y: \(tagLocation.y)) -> Converted: \(convertedPoint)")
+        
         DispatchQueue.main.async {
             self.tagPlaneLocation = convertedPoint
         }
