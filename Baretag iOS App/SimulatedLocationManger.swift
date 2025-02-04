@@ -47,8 +47,3 @@ class SimulatedLocationManager: ObservableObject {
     }
 }
 
-// Model for decoding JSON
-struct SimulatedLocation: Codable {
-    let latitude: Double
-    let longitude: Double
-}

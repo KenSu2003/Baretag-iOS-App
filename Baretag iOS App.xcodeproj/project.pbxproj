@@ -409,6 +409,10 @@
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Need to access bluetooth for GPS location.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "Need to access bluetooth for GPS location.";
 				INFOPLIST_KEY_NSBluetoothWhileInUseUsageDescription = "Need to access bluetooth for GPS location.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Need to access location for GPS location.";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Need to access location for GPS location.";
+				INFOPLIST_KEY_NSLocationTemporaryUsageDescriptionDictionary = "Need to access location for GPS location.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Need to access location for GPS location.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -441,6 +445,10 @@
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Need to access bluetooth for GPS location.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "Need to access bluetooth for GPS location.";
 				INFOPLIST_KEY_NSBluetoothWhileInUseUsageDescription = "Need to access bluetooth for GPS location.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Need to access location for GPS location.";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Need to access location for GPS location.";
+				INFOPLIST_KEY_NSLocationTemporaryUsageDescriptionDictionary = "Need to access location for GPS location.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Need to access location for GPS location.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

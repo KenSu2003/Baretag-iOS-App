@@ -4,8 +4,8 @@ import Combine
 class TagDataWatcher: ObservableObject {
     @Published var tagLocation: Tag?
 
-    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/tagData.json"  // Server URL
-    private let localFilePath = "/Users/kensu/Documents/tagData.json"  // Local file path
+    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/tags.json"  // Server URL
+    private let localFilePath = "/Users/kensu/Documents/tags.json"  // Local file path
     private var timer: Timer?
     private var useLocalFile: Bool  // Toggle between server or local file
 
