@@ -11,12 +11,12 @@ import Combine
 class AnchorDataWatcher: ObservableObject {
     @Published var anchors: [Anchor] = []
 
-    private let serverURL = "https://example.com/anchors.json"  // Replace with actual URL
+    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/anchors.json"  // Replace with actual URL
     private let localFilePath = "/Users/kensu/Documents/anchors.json"  // Local file path
     private var timer: Timer?
     private var useLocalFile: Bool  // Toggle between server and local file
 
-    init(useLocalFile: Bool = true) {
+    init(useLocalFile: Bool = false) {
         self.useLocalFile = useLocalFile
         fetchAnchors()
     }

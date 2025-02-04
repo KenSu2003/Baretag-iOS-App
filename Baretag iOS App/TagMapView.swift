@@ -14,7 +14,8 @@ import SwiftUI
 import MapKit
 
 struct TagMapView: View {
-    @StateObject private var tagDataWatcher = TagDataWatcher()
+    
+    @StateObject private var tagDataWatcher = TagDataWatcher(useLocalFile: false)   // Set useLocalFile here
     @State private var centerCoordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
     @State private var isMapLocked = true
 

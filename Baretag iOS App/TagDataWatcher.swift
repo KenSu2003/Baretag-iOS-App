@@ -9,7 +9,7 @@ class TagDataWatcher: ObservableObject {
     private var timer: Timer?
     private var useLocalFile: Bool  // Toggle between server or local file
 
-    // Set useLocalFile here
+    
     init(useLocalFile: Bool = false) {
         self.useLocalFile = useLocalFile
         fetchData()

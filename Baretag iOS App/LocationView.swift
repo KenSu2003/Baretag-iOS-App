@@ -8,8 +8,10 @@ import SwiftUI
 import CoreLocation
 
 struct LocationView: View {
-    @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: true)
-    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: true)
+    
+    // Set uselocal file here
+    @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: false) // Set useLocalFile here
+    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: false)       // Set useLocalFile here
     @StateObject private var simulatedLocationManager = SimulatedLocationManager()  // Simulated location
 
     var body: some View {
