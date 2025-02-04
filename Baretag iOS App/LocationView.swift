@@ -7,19 +7,20 @@
 import SwiftUI
 
 struct LocationView: View {
-    @State private var anchors: [Anchor] = []
-    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: true)  // Change to `true` for local data
+    @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: true)  // Dynamic anchors
+    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: true)  // Dynamic tag updates
 
     var body: some View {
         GeometryReader { geometry in
-            let maxX = (anchors.map { $0.position.x }.max() ?? 100)
-            let maxY = (anchors.map { $0.position.y }.max() ?? 100)
+            let maxX = (anchorWatcher.anchors.map { $0.position.x }.max() ?? 100)
+            let maxY = (anchorWatcher.anchors.map { $0.position.y }.max() ?? 100)
 
             let dynamicMaxX = tagWatcher.tagLocation != nil ? max(maxX, tagWatcher.tagLocation!.x) : maxX
             let dynamicMaxY = tagWatcher.tagLocation != nil ? max(maxY, tagWatcher.tagLocation!.y) : maxY
 
             ZStack {
-                ForEach(anchors, id: \.id) { anchor in
+                // Dynamically position anchors
+                ForEach(anchorWatcher.anchors, id: \.id) { anchor in
                     VStack {
                         Rectangle()
                             .fill(Color.white)
@@ -36,6 +37,7 @@ struct LocationView: View {
                     )
                 }
 
+                // Position the tag dynamically
                 if let tag = tagWatcher.tagLocation {
                     Circle()
                         .fill(Color.red)
@@ -51,25 +53,8 @@ struct LocationView: View {
         }
         .background(Color.black.ignoresSafeArea())
         .onAppear {
-            loadAnchors()
+            anchorWatcher.startUpdating()
             tagWatcher.startUpdating()
-        }
-    }
-
-    private func loadAnchors() {
-        if let url = Bundle.main.url(forResource: "anchors", withExtension: "json"),
-           let data = try? Data(contentsOf: url),
-           let jsonObjects = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
-            
-            anchors = jsonObjects.compactMap { obj in
-                if let id = obj["id"] as? String,
-                   let name = obj["name"] as? String,
-                   let posX = obj["positionX"] as? CGFloat,
-                   let posY = obj["positionY"] as? CGFloat {
-                    return Anchor(id: id, name: name, position: CGPoint(x: posX, y: posY))
-                }
-                return nil
-            }
         }
     }
 }

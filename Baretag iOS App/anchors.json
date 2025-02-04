@@ -2,20 +2,25 @@
     {
         "id": "anchor1",
         "name": "Bottom Left",
+        "latitude": 42.39356636977298,
+        "longitude": -72.52874061779049,
         "positionX": 0,
         "positionY": 0
     },
     {
         "id": "anchor2",
         "name": "Top Left",
+        "latitude": 42.39330456034727,
+        "longitude": -72.52947879241746,
         "positionX": 0,
         "positionY": 100
     },
     {
         "id": "anchor3",
         "name": "Top Right",
-        "positionX": 100,
+        "latitude": 42.39367166929857,
+        "longitude": -72.52969898450374,
+        "positionX": 50,
         "positionY": 100
     }
 ]
-
