@@ -13,10 +13,21 @@ struct Tag: Codable, Equatable {
     let name: String
     let latitude: Double
     let longitude: Double
-    let x: CGFloat  // UWB plane x-coordinate
-    let y: CGFloat  // UWB plane y-coordinate
+    let x: CGFloat
+    let y: CGFloat
 
-    // Automatic conformance works as long as all properties conform to `Equatable`
+    // Provide default values for x and y during decoding if missing
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        latitude = try container.decode(Double.self, forKey: .latitude)
+        longitude = try container.decode(Double.self, forKey: .longitude)
+
+        // Default to 0.0 if x and y are not present in the JSON
+        x = try container.decodeIfPresent(CGFloat.self, forKey: .x) ?? 0.0
+        y = try container.decodeIfPresent(CGFloat.self, forKey: .y) ?? 0.0
+    }
 }
 
 
