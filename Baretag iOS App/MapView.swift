@@ -17,7 +17,7 @@ struct MapView: View {
     
     @StateObject private var tagDataWatcher = TagDataWatcher(useLocalFile: false)
     @StateObject private var userLocationManager = UserLocationManager()  // Real-time GPS location
-    @State private var centerCoordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)  // Default center
+    @State private var centerCoordinate = CLLocationCoordinate2D(latitude: 0.0, longitude: 0.0)  // Initial placeholder
     @State private var isMapLocked = true
 
     var body: some View {
@@ -48,8 +48,13 @@ struct MapView: View {
                         // Lock/Unlock Button
                         Button(action: {
                             isMapLocked.toggle()
+                            
                             if isMapLocked, let userLocation = userLocationManager.userLocation {
-                                centerCoordinate = userLocation.coordinate
+                                centerCoordinateRegion.center = userLocation.coordinate
+                                centerCoordinateRegion.span = zoomedInSpan
+                            } else {
+                                centerCoordinateRegion.center = centerCoordinate  // Go back to the tag
+                                centerCoordinateRegion.span = zoomedOutSpan
                             }
                         }) {
                             Image(systemName: isMapLocked ? "scope" : "location.north.fill")
@@ -77,27 +82,45 @@ struct MapView: View {
         }
         .onAppear {
             tagDataWatcher.startUpdating()
+            
+            // Initialize the centerCoordinate and zoom to the tag's location
+            if let tag = tagDataWatcher.tagLocation {
+                centerCoordinate = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
+                centerCoordinateRegion.center = centerCoordinate
+                centerCoordinateRegion.span = zoomedInSpan  // Zoom in on the tag
+            }
         }
         .onChange(of: userLocationManager.userLocation) { _, newValue in
             if let userLocation = newValue {
                 print("📍 User location updated: \(userLocation.coordinate.latitude), \(userLocation.coordinate.longitude)")
                 if isMapLocked {
-                    centerCoordinate = userLocation.coordinate
+                    centerCoordinateRegion.center = userLocation.coordinate
                 }
             }
         }
         .onChange(of: tagDataWatcher.tagLocation) { _, newValue in
             if let tag = newValue {
                 print("🔄 Tag location updated: \(tag.latitude), \(tag.longitude)")
+                
+                // Re-center and zoom in on the updated tag location if the map is not locked
+                if !isMapLocked {
+                    centerCoordinate = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
+                    centerCoordinateRegion.center = centerCoordinate
+                    centerCoordinateRegion.span = zoomedInSpan  // Zoom in on the tag
+                }
             }
         }
     }
     
     // Map region binding to center coordinates dynamically
     @State private var centerCoordinateRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+        center: CLLocationCoordinate2D(latitude: 0.0, longitude: 0.0),  // Placeholder, set dynamically
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     )
+    
+    // Define zoom levels
+    private let zoomedInSpan = MKCoordinateSpan(latitudeDelta: 0.002, longitudeDelta: 0.002)  // Zoomed in on the tag
+    private let zoomedOutSpan = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)  // Default wide view
     
     // User and tag annotations
     private var userAnnotation: MapAnnotationItem {
