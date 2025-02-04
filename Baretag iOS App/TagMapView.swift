@@ -20,24 +20,35 @@ struct TagMapView: View {
 
     var body: some View {
         VStack {
-            ZStack(alignment: .topTrailing) {
-                // MapView with Lock/Unlock functionality
+            ZStack {
+                // MapView occupies most of the screen
                 MapViewRepresentable(centerCoordinate: $centerCoordinate, isLocked: $isMapLocked)
-
-                // Lock/Unlock Button
-                Button(action: {
-                    isMapLocked.toggle()
-                }) {
-                    Text(isMapLocked ? "Unlock" : "Lock")
-                        .font(.headline)
+                    .edgesIgnoringSafeArea(.top)  // Ensure it fills the top area
+                
+                VStack {
+                    Spacer()  // Pushes the button to the bottom
+                    
+                    HStack {
+                        Spacer()  // Pushes the button to the right
+                        
+                        // Lock/Unlock Button
+                        Button(action: {
+                            isMapLocked.toggle()
+                        }) {
+                            Image(systemName: isMapLocked ? "scope" : "location.north.fill")
+                                .font(.title2)  // Adjust the icon size
+                                .padding()
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
                         .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        .padding()
+                    }
                 }
             }
-
+            .frame(maxWidth: .infinity, maxHeight: .infinity)  // Allow the map to expand fully
+            
+            // Tag data section at the bottom
             if let tag = tagDataWatcher.tagLocation {
                 Text("Current Tag: \(tag.name)")
                     .font(.subheadline)
@@ -50,11 +61,12 @@ struct TagMapView: View {
         .onAppear {
             tagDataWatcher.startUpdating()
         }
-        .onChange(of: tagDataWatcher.tagLocation) {
-            if let tag = tagDataWatcher.tagLocation {
+        .onChange(of: tagDataWatcher.tagLocation) { oldValue, newValue in
+            if let tag = newValue {
                 centerCoordinate = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
                 print("🔄 Map re-centered to: \(centerCoordinate.latitude), \(centerCoordinate.longitude)")
             }
         }
     }
 }
+

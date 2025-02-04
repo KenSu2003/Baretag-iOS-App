@@ -27,9 +27,9 @@ struct LocationView: View {
                         Rectangle()
                             .fill(Color.white)
                             .frame(width: 20, height: 20)
-                        Text(anchor.name)
-                            .foregroundColor(.white)
-                            .font(.caption)
+//                        Text(anchor.name)
+//                            .foregroundColor(.white)
+//                            .font(.caption)
                     }
                     .position(
                         CGPoint(
