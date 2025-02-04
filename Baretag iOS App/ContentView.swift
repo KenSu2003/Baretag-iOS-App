@@ -22,7 +22,7 @@ struct ContentView: View {
                     }
 
                 // Tab 2: Display Received Data
-                TagMapView()
+                MapView()
                     .tabItem {
                         Label("Map", systemImage: "map")
                     }
