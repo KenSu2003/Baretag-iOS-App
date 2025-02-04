@@ -70,15 +70,28 @@ struct MapView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            // Display tag information
-            if let tag = tagDataWatcher.tagLocation {
-                Text("Current Tag: \(tag.name)")
-                    .font(.subheadline)
-                    .padding()
-            } else {
-                Text("Loading tag data...")
-                    .font(.headline)
+            // BareTag icons section at the bottom
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    ForEach(tags, id: \.id) { tag in
+                        VStack {
+                            Image(systemName: "tag.circle.fill")
+                                .resizable()
+                                .frame(width: 40, height: 40)
+                                .foregroundColor(.blue)
+                                .onTapGesture {
+                                    // Zoom in on the selected tag’s location
+                                    zoomToTag(tag: tag)
+                                }
+                            Text(tag.name)
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 8)
+                    }
+                }
+                .padding()
             }
+            .background(Color(UIColor.systemGray6))  // Light background for tag section
         }
         .onAppear {
             tagDataWatcher.startUpdating()
@@ -112,6 +125,13 @@ struct MapView: View {
         }
     }
     
+    // Zoom to the selected tag’s location
+    private func zoomToTag(tag: BareTag) {
+        print("🔍 Zooming to tag: \(tag.name) at \(tag.latitude), \(tag.longitude)")
+        centerCoordinateRegion.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
+        centerCoordinateRegion.span = zoomedInSpan
+    }
+    
     // Map region binding to center coordinates dynamically
     @State private var centerCoordinateRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 0.0, longitude: 0.0),  // Placeholder, set dynamically
@@ -121,6 +141,15 @@ struct MapView: View {
     // Define zoom levels
     private let zoomedInSpan = MKCoordinateSpan(latitudeDelta: 0.002, longitudeDelta: 0.002)  // Zoomed in on the tag
     private let zoomedOutSpan = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)  // Default wide view
+    
+    // Placeholder for multiple BareTags (replace this with actual tag data from the watcher)
+    private var tags: [BareTag] {
+        return [
+            BareTag(id: UUID(), name: "Sample Tag 1", latitude: 37.7749, longitude: -122.4194),
+            BareTag(id: UUID(), name: "Sample Tag 2", latitude: 37.7750, longitude: -122.4195),
+            BareTag(id: UUID(), name: "Sample Tag 3", latitude: 37.7751, longitude: -122.4196)
+        ]
+    }
     
     // User and tag annotations
     private var userAnnotation: MapAnnotationItem {
@@ -138,6 +167,14 @@ struct MapView: View {
             return MapAnnotationItem(type: .tag, coordinate: centerCoordinateRegion.center)
         }
     }
+}
+
+// Updated BareTag struct with coordinates
+struct BareTag: Identifiable {
+    let id: UUID
+    let name: String
+    let latitude: Double
+    let longitude: Double
 }
 
 // Enum to distinguish between user and tag annotations
