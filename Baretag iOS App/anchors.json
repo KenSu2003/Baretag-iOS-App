@@ -1,0 +1,21 @@
+[
+    {
+        "id": "anchor1",
+        "name": "Bottom Left",
+        "positionX": 0,
+        "positionY": 0
+    },
+    {
+        "id": "anchor2",
+        "name": "Top Left",
+        "positionX": 0,
+        "positionY": 100
+    },
+    {
+        "id": "anchor3",
+        "name": "Top Right",
+        "positionX": 100,
+        "positionY": 100
+    }
+]
+

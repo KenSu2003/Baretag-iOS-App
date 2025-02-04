@@ -4,65 +4,72 @@
 //
 //  Created by Ken Su on 2/3/25.
 //
-
 import SwiftUI
 
 struct LocationView: View {
-    @ObservedObject var tagUpdater = TagLocationUpdater()
-
-    @State private var useUWB = true  // Default to using UWB plane coordinates
-
-    var anchors: [Anchor] = loadAnchorsFromJSON()
+    @State private var anchors: [Anchor] = []
+    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: true)  // Change to `true` for local data
 
     var body: some View {
         GeometryReader { geometry in
-            let zoom_scale = 0.8
-            let scaleX = geometry.size.width / 100 * zoom_scale // Assuming UWB coordinates are scaled to 100x100
-            let scaleY = geometry.size.height / 100 * zoom_scale
+            let maxX = (anchors.map { $0.position.x }.max() ?? 100)
+            let maxY = (anchors.map { $0.position.y }.max() ?? 100)
 
-            VStack {
-                // Toggle between UWB and GPS-based locations
-                Toggle("Use UWB Coordinates", isOn: $useUWB)
-                    .padding()
-                    .foregroundColor(.white)
+            let dynamicMaxX = tagWatcher.tagLocation != nil ? max(maxX, tagWatcher.tagLocation!.x) : maxX
+            let dynamicMaxY = tagWatcher.tagLocation != nil ? max(maxY, tagWatcher.tagLocation!.y) : maxY
 
-                ZStack {
-                    // Draw the anchors
-                    ForEach(anchors, id: \.id) { anchor in
-                        Text(anchor.name)
-                            .foregroundColor(.white)
-                            .position(anchorPosition(for: anchor, scaleX: scaleX, scaleY: scaleY))
-                            .font(.caption)
-                        
+            ZStack {
+                ForEach(anchors, id: \.id) { anchor in
+                    VStack {
                         Rectangle()
                             .fill(Color.white)
                             .frame(width: 20, height: 20)
-                            .position(anchorPosition(for: anchor, scaleX: scaleX, scaleY: scaleY))
+                        Text(anchor.name)
+                            .foregroundColor(.white)
+                            .font(.caption)
                     }
+                    .position(
+                        CGPoint(
+                            x: (anchor.position.x / dynamicMaxX) * geometry.size.width,
+                            y: (1 - (anchor.position.y / dynamicMaxY)) * geometry.size.height
+                        )
+                    )
+                }
 
-
-                    // Draw the tag location
+                if let tag = tagWatcher.tagLocation {
                     Circle()
                         .fill(Color.red)
                         .frame(width: 20, height: 20)
-                        .position(tagPosition(scaleX: scaleX, scaleY: scaleY))
+                        .position(
+                            CGPoint(
+                                x: (tag.x / dynamicMaxX) * geometry.size.width,
+                                y: (1 - (tag.y / dynamicMaxY)) * geometry.size.height
+                            )
+                        )
                 }
             }
         }
         .background(Color.black.ignoresSafeArea())
+        .onAppear {
+            loadAnchors()
+            tagWatcher.startUpdating()
+        }
     }
 
-    // Helper function to calculate anchor positions
-    private func anchorPosition(for anchor: Anchor, scaleX: CGFloat, scaleY: CGFloat) -> CGPoint {
-        let x = useUWB ? anchor.position.x * scaleX : convertGPSToPlane(latitude: anchor.latitude, longitude: anchor.longitude).x * scaleX
-        let y = useUWB ? anchor.position.y * scaleY : convertGPSToPlane(latitude: anchor.latitude, longitude: anchor.longitude).y * scaleY
-        return CGPoint(x: x, y: y)
-    }
-
-    // Helper function to calculate tag position
-    private func tagPosition(scaleX: CGFloat, scaleY: CGFloat) -> CGPoint {
-        let x = useUWB ? tagUpdater.tagPlaneLocation.x * scaleX : convertGPSToPlane(latitude: tagUpdater.gpsLatitude, longitude: tagUpdater.gpsLongitude).x * scaleX
-        let y = useUWB ? tagUpdater.tagPlaneLocation.y * scaleY : convertGPSToPlane(latitude: tagUpdater.gpsLatitude, longitude: tagUpdater.gpsLongitude).y * scaleY
-        return CGPoint(x: x, y: y)
+    private func loadAnchors() {
+        if let url = Bundle.main.url(forResource: "anchors", withExtension: "json"),
+           let data = try? Data(contentsOf: url),
+           let jsonObjects = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+            
+            anchors = jsonObjects.compactMap { obj in
+                if let id = obj["id"] as? String,
+                   let name = obj["name"] as? String,
+                   let posX = obj["positionX"] as? CGFloat,
+                   let posY = obj["positionY"] as? CGFloat {
+                    return Anchor(id: id, name: name, position: CGPoint(x: posX, y: posY))
+                }
+                return nil
+            }
+        }
     }
 }

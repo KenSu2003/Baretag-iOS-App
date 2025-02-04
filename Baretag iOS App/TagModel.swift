@@ -6,11 +6,9 @@
 //
 
 import Foundation
-
-import Foundation
 import CoreGraphics
 
-struct TagLocation: Codable, Equatable {
+struct Tag: Codable, Equatable {
     let id: String
     let name: String
     let latitude: Double
@@ -50,13 +48,13 @@ func copyJSONToDocuments() -> URL? {
 
 
 
-func loadTagData() -> TagLocation? {
+func loadTagData() -> Tag? {
     let customPath = "/Users/kensu/Documents/tagData.json"
     let url = URL(fileURLWithPath: customPath)
     
     do {
         let data = try Data(contentsOf: url)
-        let tag = try JSONDecoder().decode(TagLocation.self, from: data)
+        let tag = try JSONDecoder().decode(Tag.self, from: data)
         print("✅ JSON decoded successfully: \(tag)")
         return tag
     } catch {
