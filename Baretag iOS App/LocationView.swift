@@ -5,10 +5,12 @@
 //  Created by Ken Su on 2/3/25.
 //
 import SwiftUI
+import CoreLocation
 
 struct LocationView: View {
-    @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: true)  // Dynamic anchors
-    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: true)  // Dynamic tag updates
+    @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: true)
+    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: true)
+    @StateObject private var simulatedLocationManager = SimulatedLocationManager()  // Use simulated location
 
     var body: some View {
         GeometryReader { geometry in
@@ -49,6 +51,22 @@ struct LocationView: View {
                             )
                         )
                 }
+
+                // Position the simulated user location dynamically
+                if let userLocation = simulatedLocationManager.userLocation {
+                    let userX = convertLongitudeToPlane(longitude: userLocation.coordinate.longitude)
+                    let userY = convertLatitudeToPlane(latitude: userLocation.coordinate.latitude)
+
+                    Circle()
+                        .fill(Color.blue)
+                        .frame(width: 15, height: 15)
+                        .position(
+                            CGPoint(
+                                x: (userX / dynamicMaxX) * geometry.size.width,
+                                y: (1 - (userY / dynamicMaxY)) * geometry.size.height
+                            )
+                        )
+                }
             }
         }
         .background(Color.black.ignoresSafeArea())
@@ -56,5 +74,13 @@ struct LocationView: View {
             anchorWatcher.startUpdating()
             tagWatcher.startUpdating()
         }
+    }
+
+    private func convertLongitudeToPlane(longitude: Double) -> CGFloat {
+        return CGFloat((longitude + 180) / 360 * 100)  // Normalize to (0, 100) range
+    }
+
+    private func convertLatitudeToPlane(latitude: Double) -> CGFloat {
+        return CGFloat((latitude + 90) / 180 * 100)  // Normalize to (0, 100) range
     }
 }

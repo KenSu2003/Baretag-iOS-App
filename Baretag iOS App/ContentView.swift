@@ -30,7 +30,7 @@ struct ContentView: View {
                 //Tab 3: Precise Relative Location
                 LocationView()
                     .tabItem{
-                        Label("Precise GPS", systemImage: "airtag")
+                        Label("UWB", systemImage: "airtag")
                     }
             }
         }
