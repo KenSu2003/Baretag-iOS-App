@@ -10,7 +10,7 @@ import CoreLocation
 struct LocationView: View {
     @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: true)
     @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: true)
-    @StateObject private var simulatedLocationManager = SimulatedLocationManager()  // Use simulated location
+    @StateObject private var simulatedLocationManager = SimulatedLocationManager()  // Simulated location
 
     var body: some View {
         GeometryReader { geometry in
@@ -54,18 +54,12 @@ struct LocationView: View {
 
                 // Position the simulated user location dynamically
                 if let userLocation = simulatedLocationManager.userLocation {
-                    let userX = convertLongitudeToPlane(longitude: userLocation.coordinate.longitude)
-                    let userY = convertLatitudeToPlane(latitude: userLocation.coordinate.latitude)
+                    let userPosition = calculateUserPosition(userLocation: userLocation, dynamicMaxX: dynamicMaxX, dynamicMaxY: dynamicMaxY, geometry: geometry)
 
                     Circle()
                         .fill(Color.blue)
                         .frame(width: 15, height: 15)
-                        .position(
-                            CGPoint(
-                                x: (userX / dynamicMaxX) * geometry.size.width,
-                                y: (1 - (userY / dynamicMaxY)) * geometry.size.height
-                            )
-                        )
+                        .position(userPosition)
                 }
             }
         }
@@ -76,11 +70,30 @@ struct LocationView: View {
         }
     }
 
+    // ✅ New method to handle position calculation and debugging
+    private func calculateUserPosition(userLocation: CLLocation, dynamicMaxX: CGFloat, dynamicMaxY: CGFloat, geometry: GeometryProxy) -> CGPoint {
+        let userX = convertLongitudeToPlane(longitude: userLocation.coordinate.longitude)
+        let userY = convertLatitudeToPlane(latitude: userLocation.coordinate.latitude)
+
+        // ✅ Print the debug message outside the view-building context
+        print("🔵 User coordinates before scaling: (x: \(userX), y: \(userY))")
+
+        // Return the scaled position for the blue circle
+        return CGPoint(
+            x: (userX / dynamicMaxX) * geometry.size.width,
+            y: (1 - (userY / dynamicMaxY)) * geometry.size.height
+        )
+    }
+
     private func convertLongitudeToPlane(longitude: Double) -> CGFloat {
-        return CGFloat((longitude + 180) / 360 * 100)  // Normalize to (0, 100) range
+        let minLongitude = -72.53  // Adjust based on your region
+        let maxLongitude = -72.52
+        return CGFloat((longitude - minLongitude) / (maxLongitude - minLongitude) * 100)
     }
 
     private func convertLatitudeToPlane(latitude: Double) -> CGFloat {
-        return CGFloat((latitude + 90) / 180 * 100)  // Normalize to (0, 100) range
+        let minLatitude = 42.39  // Adjust based on your region
+        let maxLatitude = 42.40
+        return CGFloat((latitude - minLatitude) / (maxLatitude - minLatitude) * 100)
     }
 }

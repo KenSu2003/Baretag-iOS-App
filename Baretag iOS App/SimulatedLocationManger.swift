@@ -12,7 +12,7 @@ import Combine
 class SimulatedLocationManager: ObservableObject {
     @Published var userLocation: CLLocation?
 
-    private let localFilePath = "/Users/kensu/Documents/userLocation.json"  // Adjust as needed
+    private let localFilePath = "/Users/kensu/Documents/userLocation.json"  // Adjust path as needed
     private var timer: Timer?
 
     init() {
@@ -31,6 +31,7 @@ class SimulatedLocationManager: ObservableObject {
     }
 
     private func loadSimulatedLocation() {
+        print("🔄 Loading simulated location...")
         let url = URL(fileURLWithPath: localFilePath)
         do {
             let data = try Data(contentsOf: url)
