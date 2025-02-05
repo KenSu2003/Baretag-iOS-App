@@ -3,12 +3,18 @@
 //  Baretag iOS App
 //
 //  Created by Ken Su on 1/21/25.
-//
+//  Last Edited by Ken Su on 2/4/25.
 
 
 
 // "Map" Guide: https://developer.apple.com/documentation/mapkit/map
 // "Annotation" Guide: https://developer.apple.com/documentation/mapkit/annotation
+//
+//  TagMapView.swift
+//  Baretag iOS App
+//
+//  Created by Ken Su on 1/21/25.
+//
 
 import SwiftUI
 import MapKit
@@ -48,7 +54,9 @@ struct MapView: View {
                         // Lock/Unlock Button
                         Button(action: {
                             isMapLocked.toggle()
-                            updateCenterCoordinateBasedOnLock()
+                            if isMapLocked {
+                                updateCenterCoordinateBasedOnLock()  // Only update center when locking
+                            }
                         }) {
                             Image(systemName: isMapLocked ? "scope" : "location.north.fill")
                                 .font(.title2)
@@ -99,23 +107,14 @@ struct MapView: View {
                 updateCenterCoordinateBasedOnLock()  // Keep the map centered on user location when locked
             }
         }
-        .onChange(of: tagDataWatcher.tagLocation) { _, _ in
-            if !isMapLocked {
-                updateCenterCoordinateBasedOnLock()  // Center on tag location when unlocked
-            }
-        }
     }
     
-    // Update the center coordinate and zoom level based on the map lock state
+    // Update the center coordinate and zoom level only when locking the map
     private func updateCenterCoordinateBasedOnLock() {
         if isMapLocked, let userLocation = userLocationManager.userLocation {
             print("🔍 Centering map on user location")
             centerCoordinateRegion.center = userLocation.coordinate
             centerCoordinateRegion.span = zoomedInSpan  // Zoom in on the user
-        } else if let tag = tagDataWatcher.tagLocation {
-            print("🔍 Centering map on tag location")
-            centerCoordinateRegion.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
-            centerCoordinateRegion.span = zoomedOutSpan  // Slightly wider view for the tag
         }
     }
 
@@ -133,7 +132,7 @@ struct MapView: View {
     )
     
     // Define zoom levels
-    private let zoomedInSpan = MKCoordinateSpan(latitudeDelta: 0.002, longitudeDelta: 0.002)  // Zoomed in on the user or tag
+    private let zoomedInSpan = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)  // Zoomed in on the user or tag
     private let zoomedOutSpan = MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)  // Default view for tags
     
     // Annotations for the user and tag locations
