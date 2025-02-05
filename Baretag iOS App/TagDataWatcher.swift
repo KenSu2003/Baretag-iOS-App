@@ -2,14 +2,13 @@ import Foundation
 import Combine
 
 class TagDataWatcher: ObservableObject {
-    @Published var tagLocation: Tag?
+    @Published var tagLocation: BareTag?
 
     private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/tags.json"  // Server URL
     private let localFilePath = "/Users/kensu/Documents/tags.json"  // Local file path
     private var timer: Timer?
     private var useLocalFile: Bool  // Toggle between server or local file
 
-    
     init(useLocalFile: Bool = false) {
         self.useLocalFile = useLocalFile
         fetchData()
@@ -24,19 +23,16 @@ class TagDataWatcher: ObservableObject {
         }
     }
 
-
     deinit {
         timer?.invalidate()
     }
 
     private func fetchData() {
-        
         if !useLocalFile {
             fetchServerData()
         } else {
             fetchLocalData()
         }
-        
     }
 
     // Fetch tag data from the local file
@@ -44,7 +40,7 @@ class TagDataWatcher: ObservableObject {
         let url = URL(fileURLWithPath: localFilePath)
         do {
             let data = try Data(contentsOf: url)
-            let tagLocation = try JSONDecoder().decode(Tag.self, from: data)
+            let tagLocation = try JSONDecoder().decode(BareTag.self, from: data)
             DispatchQueue.main.async {
                 self.tagLocation = tagLocation
             }
@@ -82,7 +78,7 @@ class TagDataWatcher: ObservableObject {
             }
 
             do {
-                let tagLocation = try JSONDecoder().decode(Tag.self, from: data)
+                let tagLocation = try JSONDecoder().decode(BareTag.self, from: data)
                 DispatchQueue.main.async {
                     self.tagLocation = tagLocation
                 }
@@ -94,5 +90,4 @@ class TagDataWatcher: ObservableObject {
         }
         task.resume()
     }
-
 }

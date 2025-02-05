@@ -24,7 +24,7 @@ struct MapView: View {
         VStack {
             ZStack {
                 // Main map view
-                Map(coordinateRegion: $centerCoordinateRegion, showsUserLocation: false, annotationItems: [userAnnotation, tagAnnotation]) { item in
+                Map(coordinateRegion: $centerCoordinateRegion, showsUserLocation: false, annotationItems: mapAnnotations) { item in
                     MapAnnotation(coordinate: item.coordinate) {
                         if item.type == .user {
                             Circle()
@@ -48,14 +48,7 @@ struct MapView: View {
                         // Lock/Unlock Button
                         Button(action: {
                             isMapLocked.toggle()
-                            
-                            if isMapLocked, let userLocation = userLocationManager.userLocation {
-                                centerCoordinateRegion.center = userLocation.coordinate
-                                centerCoordinateRegion.span = zoomedInSpan
-                            } else {
-                                centerCoordinateRegion.center = centerCoordinate  // Go back to the tag
-                                centerCoordinateRegion.span = zoomedOutSpan
-                            }
+                            updateCenterCoordinateBasedOnLock()
                         }) {
                             Image(systemName: isMapLocked ? "scope" : "location.north.fill")
                                 .font(.title2)
@@ -73,7 +66,7 @@ struct MapView: View {
             // BareTag icons section at the bottom
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
-                    ForEach(tags, id: \.id) { tag in
+                    if let tag = tagDataWatcher.tagLocation {
                         VStack {
                             Image(systemName: "tag.circle.fill")
                                 .resizable()
@@ -87,6 +80,10 @@ struct MapView: View {
                                 .font(.caption)
                         }
                         .padding(.horizontal, 8)
+                    } else {
+                        Text("Loading tags...")
+                            .font(.headline)
+                            .padding()
                     }
                 }
                 .padding()
@@ -95,37 +92,34 @@ struct MapView: View {
         }
         .onAppear {
             tagDataWatcher.startUpdating()
-            
-            // Initialize the centerCoordinate and zoom to the tag's location
-            if let tag = tagDataWatcher.tagLocation {
-                centerCoordinate = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
-                centerCoordinateRegion.center = centerCoordinate
-                centerCoordinateRegion.span = zoomedInSpan  // Zoom in on the tag
+            updateCenterCoordinateBasedOnLock()  // Set initial map center
+        }
+        .onChange(of: userLocationManager.userLocation) { _, _ in
+            if isMapLocked {
+                updateCenterCoordinateBasedOnLock()  // Keep the map centered on user location when locked
             }
         }
-        .onChange(of: userLocationManager.userLocation) { _, newValue in
-            if let userLocation = newValue {
-                print("📍 User location updated: \(userLocation.coordinate.latitude), \(userLocation.coordinate.longitude)")
-                if isMapLocked {
-                    centerCoordinateRegion.center = userLocation.coordinate
-                }
-            }
-        }
-        .onChange(of: tagDataWatcher.tagLocation) { _, newValue in
-            if let tag = newValue {
-                print("🔄 Tag location updated: \(tag.latitude), \(tag.longitude)")
-                
-                // Re-center and zoom in on the updated tag location if the map is not locked
-                if !isMapLocked {
-                    centerCoordinate = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
-                    centerCoordinateRegion.center = centerCoordinate
-                    centerCoordinateRegion.span = zoomedInSpan  // Zoom in on the tag
-                }
+        .onChange(of: tagDataWatcher.tagLocation) { _, _ in
+            if !isMapLocked {
+                updateCenterCoordinateBasedOnLock()  // Center on tag location when unlocked
             }
         }
     }
     
-    // Zoom to the selected tag’s location
+    // Update the center coordinate and zoom level based on the map lock state
+    private func updateCenterCoordinateBasedOnLock() {
+        if isMapLocked, let userLocation = userLocationManager.userLocation {
+            print("🔍 Centering map on user location")
+            centerCoordinateRegion.center = userLocation.coordinate
+            centerCoordinateRegion.span = zoomedInSpan  // Zoom in on the user
+        } else if let tag = tagDataWatcher.tagLocation {
+            print("🔍 Centering map on tag location")
+            centerCoordinateRegion.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
+            centerCoordinateRegion.span = zoomedOutSpan  // Slightly wider view for the tag
+        }
+    }
+
+    // Corrected zoom function to properly set the map region based on tag location
     private func zoomToTag(tag: BareTag) {
         print("🔍 Zooming to tag: \(tag.name) at \(tag.latitude), \(tag.longitude)")
         centerCoordinateRegion.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
@@ -139,42 +133,35 @@ struct MapView: View {
     )
     
     // Define zoom levels
-    private let zoomedInSpan = MKCoordinateSpan(latitudeDelta: 0.002, longitudeDelta: 0.002)  // Zoomed in on the tag
-    private let zoomedOutSpan = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)  // Default wide view
+    private let zoomedInSpan = MKCoordinateSpan(latitudeDelta: 0.002, longitudeDelta: 0.002)  // Zoomed in on the user or tag
+    private let zoomedOutSpan = MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)  // Default view for tags
     
-    // Placeholder for multiple BareTags (replace this with actual tag data from the watcher)
-    private var tags: [BareTag] {
-        return [
-            BareTag(id: UUID(), name: "Sample Tag 1", latitude: 37.7749, longitude: -122.4194),
-            BareTag(id: UUID(), name: "Sample Tag 2", latitude: 37.7750, longitude: -122.4195),
-            BareTag(id: UUID(), name: "Sample Tag 3", latitude: 37.7751, longitude: -122.4196)
-        ]
-    }
-    
-    // User and tag annotations
-    private var userAnnotation: MapAnnotationItem {
+    // Annotations for the user and tag locations
+    private var mapAnnotations: [MapAnnotationItem] {
+        var annotations: [MapAnnotationItem] = []
+        
+        // Add user location if available
         if let userLocation = userLocationManager.userLocation {
-            return MapAnnotationItem(type: .user, coordinate: userLocation.coordinate)
-        } else {
-            return MapAnnotationItem(type: .user, coordinate: centerCoordinateRegion.center)
+            annotations.append(MapAnnotationItem(type: .user, coordinate: userLocation.coordinate))
         }
-    }
-    
-    private var tagAnnotation: MapAnnotationItem {
+
+        // Add tag location if available
         if let tag = tagDataWatcher.tagLocation {
-            return MapAnnotationItem(type: .tag, coordinate: CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude))
-        } else {
-            return MapAnnotationItem(type: .tag, coordinate: centerCoordinateRegion.center)
+            annotations.append(MapAnnotationItem(type: .tag, coordinate: CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)))
         }
+
+        return annotations
     }
 }
 
-// Updated BareTag struct with coordinates
-struct BareTag: Identifiable {
-    let id: UUID
+// Updated BareTag struct with coordinates (used in TagDataWatcher)
+struct BareTag: Identifiable, Codable, Equatable {
+    let id: String
     let name: String
     let latitude: Double
     let longitude: Double
+    let x: Double
+    let y: Double
 }
 
 // Enum to distinguish between user and tag annotations
