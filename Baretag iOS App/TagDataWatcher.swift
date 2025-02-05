@@ -54,29 +54,42 @@ class TagDataWatcher: ObservableObject {
             return
         }
 
-        print("🌐 Starting fetch from server: \(serverURL)")
+        print("🌐 Fetching data from server: \(serverURL)")
 
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            // Handle network errors
             if let error = error {
-                print("❌ Error fetching JSON from server: \(error.localizedDescription)")
+                print("❌ Network error: \(error.localizedDescription)")
                 return
             }
 
+            // Ensure the response is an HTTP response with status code 200
+            if let httpResponse = response as? HTTPURLResponse {
+                guard httpResponse.statusCode == 200 else {
+                    print("❌ Server returned status code: \(httpResponse.statusCode)")
+                    return
+                }
+            }
+
+            // Ensure we have data
             guard let data = data else {
-                print("❌ No data received from server")
+                print("❌ No data received from server.")
                 return
             }
 
+            // Try decoding the JSON
             do {
                 let tagLocations = try JSONDecoder().decode([BareTag].self, from: data)  // ✅ Decode all tags
                 DispatchQueue.main.async {
                     self.tagLocations = tagLocations  // ✅ Store all tags
                 }
-                print("✅ Fetched and decoded \(tagLocations.count) tag(s) from server.")
+                print("✅ Successfully fetched and decoded \(tagLocations.count) tag(s) from server.")
             } catch {
-                print("❌ Decoding error: \(error)")
+                print("❌ JSON decoding error: \(error.localizedDescription)")
+                print("❌ Raw server response: \(String(data: data, encoding: .utf8) ?? "Invalid data")")
             }
         }
         task.resume()
     }
+
 }
