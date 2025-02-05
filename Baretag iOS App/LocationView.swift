@@ -4,57 +4,60 @@
 //
 //  Created by Ken Su on 2/3/25.
 //
+
 import SwiftUI
 import CoreLocation
 
 struct LocationView: View {
     
-    // Set useLocalFile here
     @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: false)
     @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: false)
-    @StateObject private var userDataWatcher = UserDataWatcher(useLocalFile: false)  // Updated to UserDataWatcher
+    @StateObject private var userDataWatcher = UserDataWatcher(useLocalFile: false)
 
     var body: some View {
         GeometryReader { geometry in
-            let maxX = (anchorWatcher.anchors.map { $0.position.x }.max() ?? 100)
-            let maxY = (anchorWatcher.anchors.map { $0.position.y }.max() ?? 100)
+            // Precompute max bounds for scaling
+            let maxAnchorX = anchorWatcher.anchors.map { $0.position.x }.max() ?? 100
+            let maxAnchorY = anchorWatcher.anchors.map { $0.position.y }.max() ?? 100
+            let maxTagX = tagWatcher.tagLocations.map { $0.x }.max() ?? 0
+            let maxTagY = tagWatcher.tagLocations.map { $0.y }.max() ?? 0
 
-            let dynamicMaxX = tagWatcher.tagLocation != nil ? max(maxX, tagWatcher.tagLocation!.x) : maxX
-            let dynamicMaxY = tagWatcher.tagLocation != nil ? max(maxY, tagWatcher.tagLocation!.y) : maxY
+            let dynamicMaxX = max(maxAnchorX, maxTagX)
+            let dynamicMaxY = max(maxAnchorY, maxTagY)
 
             ZStack {
-                // Dynamically position anchors
+                // Position all anchors dynamically
                 ForEach(anchorWatcher.anchors, id: \.id) { anchor in
-                    VStack {
-                        Rectangle()
-                            .fill(Color.white)
-                            .frame(width: 20, height: 20)
-                    }
-                    .position(
-                        CGPoint(
-                            x: (anchor.position.x / dynamicMaxX) * geometry.size.width,
-                            y: (1 - (anchor.position.y / dynamicMaxY)) * geometry.size.height
-                        )
+                    let anchorPosition = CGPoint(
+                        x: (anchor.position.x / dynamicMaxX) * geometry.size.width,
+                        y: (1 - (anchor.position.y / dynamicMaxY)) * geometry.size.height
                     )
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: 20, height: 20)
+                        .position(anchorPosition)
                 }
 
-                // Position the tag dynamically
-                if let tag = tagWatcher.tagLocation {
+                // Position all tags dynamically
+                ForEach(tagWatcher.tagLocations, id: \.id) { tag in
+                    let tagPosition = CGPoint(
+                        x: (tag.x / dynamicMaxX) * geometry.size.width,
+                        y: (1 - (tag.y / dynamicMaxY)) * geometry.size.height
+                    )
                     Circle()
                         .fill(Color.red)
                         .frame(width: 20, height: 20)
-                        .position(
-                            CGPoint(
-                                x: (tag.x / dynamicMaxX) * geometry.size.width,
-                                y: (1 - (tag.y / dynamicMaxY)) * geometry.size.height
-                            )
-                        )
+                        .position(tagPosition)
                 }
 
-                // Position the user location dynamically
+                // Position user location dynamically
                 if let userLocation = userDataWatcher.userLocation {
-                    let userPosition = calculateUserPosition(userLocation: userLocation, dynamicMaxX: dynamicMaxX, dynamicMaxY: dynamicMaxY, geometry: geometry)
-
+                    let userPosition = calculateUserPosition(
+                        userLocation: userLocation,
+                        dynamicMaxX: dynamicMaxX,
+                        dynamicMaxY: dynamicMaxY,
+                        geometry: geometry
+                    )
                     Circle()
                         .fill(Color.blue)
                         .frame(width: 15, height: 15)
@@ -66,11 +69,10 @@ struct LocationView: View {
         .onAppear {
             anchorWatcher.startUpdating()
             tagWatcher.startUpdating()
-            userDataWatcher.startUpdating()  // Start updating user location
+            userDataWatcher.startUpdating()
         }
     }
 
-    // ✅ Method to handle position calculation and debugging
     private func calculateUserPosition(userLocation: CLLocation, dynamicMaxX: CGFloat, dynamicMaxY: CGFloat, geometry: GeometryProxy) -> CGPoint {
         let userX = convertLongitudeToPlane(longitude: userLocation.coordinate.longitude)
         let userY = convertLatitudeToPlane(latitude: userLocation.coordinate.latitude)
