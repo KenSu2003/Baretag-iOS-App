@@ -6,18 +6,12 @@
 //  Last Edited by Ken Su on 2/4/25.
 
 
-
 // "Map" Guide: https://developer.apple.com/documentation/mapkit/map
 // "Annotation" Guide: https://developer.apple.com/documentation/mapkit/annotation
-//
-//  TagMapView.swift
-//  Baretag iOS App
-//
-//  Created by Ken Su on 1/21/25.
-//
 
 import SwiftUI
 import MapKit
+import Combine
 
 struct MapView: View {
 
@@ -27,11 +21,14 @@ struct MapView: View {
         center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),  // Initial location
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     )
-    @State private var isMapLocked = true  // Controls the icon state
+    @State private var isMapLocked = false  // Start unlocked by default
     @State private var recenterTriggered = false  // Tracks if map movement is caused by recentering
     @State private var recenterTarget: CLLocationCoordinate2D?  // Store the target center when re-centering programmatically
     @State private var previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291))
     private let recenterTolerance: Double = 5.0  // 5 meters tolerance to avoid false unlocks
+
+    // ✅ Timer to trigger updates every 5 seconds
+    private var updateTimer = Timer.publish(every: 5.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack {
@@ -51,6 +48,10 @@ struct MapView: View {
                     }
                 }
                 .edgesIgnoringSafeArea(.top)
+                .onReceive(updateTimer) { _ in
+                    print("🔄 Timer-based update triggered.")
+                    tagDataWatcher.startUpdating()  // Automatically fetch new tag data
+                }
                 .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateRegion.center)) { newCenterWrapper in
                     detectMapMovement(newCenterWrapper.coordinate)
                 }
@@ -102,9 +103,7 @@ struct MapView: View {
         }
         .onAppear {
             print("🔓 Initializing map in unlocked state.")
-            isMapLocked = false  // Start the map unlocked
-            tagDataWatcher.startUpdating()
-            previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: centerCoordinateRegion.center)  // Initialize last coordinate
+            tagDataWatcher.startUpdating()  // Start fetching tag updates on appear
         }
     }
 
