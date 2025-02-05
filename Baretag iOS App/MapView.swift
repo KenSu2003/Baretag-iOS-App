@@ -101,6 +101,8 @@ struct MapView: View {
             .background(Color(UIColor.systemGray6))  // Light background for tag section
         }
         .onAppear {
+            print("🔓 Initializing map in unlocked state.")
+            isMapLocked = false  // Start the map unlocked
             tagDataWatcher.startUpdating()
             previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: centerCoordinateRegion.center)  // Initialize last coordinate
         }
