@@ -11,7 +11,6 @@ import Combine
 
 class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var userLocation: CLLocation?
-
     private let locationManager = CLLocationManager()
 
     override init() {
@@ -26,10 +25,11 @@ class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate
         guard let location = locations.last else { return }
         DispatchQueue.main.async {
             self.userLocation = location
+            print("📍 Live GPS Updated: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("❌ Failed to get user location: \(error)")
+        print("❌ GPS Error: \(error.localizedDescription)")
     }
 }

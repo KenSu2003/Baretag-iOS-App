@@ -11,20 +11,23 @@ import Combine
 
 class UserDataWatcher: ObservableObject {
     @Published var userLocation: CLLocation?
-
-    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/user.json"  // Replace with actual URL
-    private let localFilePath = "/Users/kensu/Documents/user.json"  // Adjust path if needed
+    
+    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/user.json"
+    private let localFilePath = "/Users/kensu/Documents/user.json"
     private var timer: Timer?
-    private var useLocalFile: Bool
+    private let useLocalFile: Bool
+    private let useServer: Bool
+    private let locationManager = UserLocationManager()
 
     init(useLocalFile: Bool = false) {
         self.useLocalFile = useLocalFile
-        fetchUserLocation()  // Load initial location
-        startUpdating()      // Periodically refresh location
+        self.useServer = false
+        self.userLocation = locationManager.userLocation
+        fetchUserLocation()
+        startUpdating()
     }
 
     func startUpdating() {
-        // Refresh user location every 5 seconds
         timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
             self.fetchUserLocation()
         }
@@ -36,11 +39,23 @@ class UserDataWatcher: ObservableObject {
 
     private func fetchUserLocation() {
         if useLocalFile {
-            fetchLocalUserLocation()
+            fetchLocalUserLocation()  // ✅ Only use local JSON
+        } else if useServer {
+            fetchServerUserLocation() // ✅ Fetch from the server
         } else {
-            fetchServerUserLocation()
+            // ✅ Only use GPS if neither local nor server is selected
+            if let gpsLocation = locationManager.userLocation {
+                DispatchQueue.main.async {
+                    self.userLocation = gpsLocation
+                    print("📡 Using live GPS: \(gpsLocation.coordinate.latitude), \(gpsLocation.coordinate.longitude)")
+                }
+            } else {
+                print("⚠️ No valid GPS location available.")
+            }
         }
     }
+
+
 
     private func fetchLocalUserLocation() {
         let url = URL(fileURLWithPath: localFilePath)
@@ -50,10 +65,10 @@ class UserDataWatcher: ObservableObject {
             let location = CLLocation(latitude: locationData.latitude, longitude: locationData.longitude)
             DispatchQueue.main.async {
                 self.userLocation = location
+                print("📂 Loaded user.json location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
             }
-            print("✅ Loaded user location from local file: \(location)")
         } catch {
-            print("❌ Failed to load or decode local user location data: \(error)")
+            print("❌ Failed to load local user location: \(error)")
         }
     }
 
@@ -63,9 +78,9 @@ class UserDataWatcher: ObservableObject {
             return
         }
 
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        let task = URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
-                print("❌ Error fetching user location from server: \(error.localizedDescription)")
+                print("❌ Network error: \(error.localizedDescription)")
                 return
             }
 
@@ -79,8 +94,8 @@ class UserDataWatcher: ObservableObject {
                 let location = CLLocation(latitude: locationData.latitude, longitude: locationData.longitude)
                 DispatchQueue.main.async {
                     self.userLocation = location
+                    print("📡 Updated user location from server: \(location.coordinate.latitude), \(location.coordinate.longitude)")
                 }
-                print("✅ Fetched and decoded user location from server: \(location)")
             } catch {
                 print("❌ Decoding error: \(error)")
             }
@@ -89,7 +104,7 @@ class UserDataWatcher: ObservableObject {
     }
 }
 
-// Model for decoding JSON
+// Model for JSON decoding
 struct SimulatedLocation: Codable {
     let latitude: Double
     let longitude: Double

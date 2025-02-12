@@ -32,6 +32,11 @@ struct ContentView: View {
                     .tabItem{
                         Label("UWB", systemImage: "airtag")
                     }
+                
+//                UWBView()  // Correctly call the view
+//                    .tabItem {
+//                        Label("Direction", systemImage: "shareplay")
+//                    }
             }
         }
 }
