@@ -57,6 +57,7 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
         
         if canUpdateStatus { status = "Location fetched. Sending data over Bluetooth..." }
         sendDataOverBluetooth()
+        sendLocationToServer(latitude: latitude!, longitude: longitude!)
     }
 
     // Called when the state of the bluetooth device changes.
@@ -102,4 +103,46 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
         peripheralManager?.startAdvertising(advertisementData)
         status = "Location data is now being advertised over Bluetooth."
     }
+    
+    
+    // Send location to server
+    func sendLocationToServer(latitude: Double, longitude: Double) {
+        let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/upload")! // Use the ngrok HTTPS URL
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let locationData: [String: Any] = [
+            "id": UUID().uuidString,
+            "latitude": latitude,
+            "longitude": longitude
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: locationData, options: [])
+        } catch {
+            print("Error encoding JSON: \(error)")
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Request Error: \(error.localizedDescription)")
+                } else if let httpResponse = response as? HTTPURLResponse {
+                    print("✅ HTTP Status Code: \(httpResponse.statusCode)")
+                }
+                
+                if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                    print("📡 Server Response: \(responseString)")
+                }
+            }
+        }
+
+        task.resume()
+    }
+
+
+    
 }

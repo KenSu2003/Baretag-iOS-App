@@ -10,9 +10,9 @@ import CoreLocation
 
 struct LocationView: View {
     
-    @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: true)
-    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: true)
-    @StateObject private var userDataWatcher = UserDataWatcher(useLocalFile: true)
+    @StateObject private var anchorWatcher = AnchorDataWatcher(useLocalFile: false)
+    @StateObject private var tagWatcher = TagDataWatcher(useLocalFile: false)
+    @StateObject private var userDataWatcher = UserDataWatcher(useLocalFile: false)
 
     var body: some View {
         GeometryReader { geometry in
