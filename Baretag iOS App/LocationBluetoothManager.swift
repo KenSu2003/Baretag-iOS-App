@@ -23,6 +23,10 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
     @Published var longitude: Double?
     @Published var geo_location: String?
     
+    // Anchor Data
+    private var anchorName = ""
+    private var anchorID = ""
+    
     // Status update for the user UI
     @Published private(set) var status: String = "Initialzing ..."
     private var canUpdateStatus = true // Flag to control updates to `status`
@@ -42,9 +46,14 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
     }
     
     
-    func fetchLocationAndSend() {
+    func fetchLocationAndSend(name: String, id: String) {
         if canUpdateStatus { status = "Fetching GPS location..." }
-        locationManager.startUpdatingLocation() // may take a few seconds
+        
+        // Store user-entered or randomized name and ID
+        self.anchorName = name
+        self.anchorID = id
+
+        locationManager.startUpdatingLocation() // Start fetching GPS
     }
     
     // didUpdateLocations: Tells the delegate that new location data is available.
@@ -57,7 +66,7 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
         
         if canUpdateStatus { status = "Location fetched. Sending data over Bluetooth..." }
         sendDataOverBluetooth()
-        sendLocationToServer(latitude: latitude!, longitude: longitude!)
+        sendLocationToServer(latitude: latitude!, longitude: longitude!, name: anchorName, id: anchorID)
     }
 
     // Called when the state of the bluetooth device changes.
@@ -105,8 +114,8 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
     }
     
     
-    // Send location to server
-    func sendLocationToServer(latitude: Double, longitude: Double) {
+    // Send location to server with user-entered or randomized name and ID
+    func sendLocationToServer(latitude: Double, longitude: Double, name: String, id: String) {
         let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/upload")! // Use the ngrok HTTPS URL
 
         var request = URLRequest(url: url)
@@ -114,7 +123,8 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let locationData: [String: Any] = [
-            "id": UUID().uuidString,
+            "id": id,
+            "name": name,
             "latitude": latitude,
             "longitude": longitude
         ]
@@ -139,7 +149,6 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
                 }
             }
         }
-
         task.resume()
     }
 
