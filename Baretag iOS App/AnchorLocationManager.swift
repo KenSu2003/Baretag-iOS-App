@@ -116,16 +116,15 @@ class AnchorLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     
     // Send location to server with user-entered or randomized name and ID
     func sendLocationToServer(latitude: Double, longitude: Double, name: String, id: String) {
-        let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/upload")! // Use the ngrok HTTPS URL
+        let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/add_anchor")! // Use the ngrok HTTPS URL
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let locationData: [String: Any] = [
-            "timestamp": CFAbsoluteTimeGetCurrent(),
-            "id": id,
-            "name": name,
+            "anchor_id": id,
+            "anchor_name": name,
             "latitude": latitude,
             "longitude": longitude
         ]
