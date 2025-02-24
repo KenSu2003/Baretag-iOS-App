@@ -10,37 +10,38 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var locationBluetoothManager = LocationBluetoothManager()
-    @State private var locationText: String = "Location: Not yet fetched"
-    
+    @State private var isAuthenticated = false
+
     var body: some View {
-            TabView {
-                // Tab 1: Fetch Location and Send via BLE
-                AnchorLocatorView()
-                    .tabItem {
-                        Label("Localizer", systemImage: "signpost.right.and.left.circle.fill")
-                    }
-
-                // Tab 2: Display Received Data
-                MapView()
-                    .tabItem {
-                        Label("Map", systemImage: "map")
-                    }
-                
-                //Tab 3: Precise Relative Location
-                LocationView()
-                    .tabItem{
-                        Label("UWB", systemImage: "airtag")
-                    }
-                
-//                UWBView()  // Correctly call the view
-//                    .tabItem {
-//                        Label("Direction", systemImage: "shareplay")
-//                    }
-            }
+        if isAuthenticated {
+            MainTabView()
+        } else {
+            LoginView(isAuthenticated: $isAuthenticated)
         }
+    }
 }
 
-#Preview {
-    ContentView()
+struct MainTabView: View {
+    var body: some View {
+        TabView {
+            AnchorLocatorView()
+                .tabItem {
+                    Label("Localizer", systemImage: "signpost.right.and.left.circle.fill")
+                }
+
+            MapView()
+                .tabItem {
+                    Label("Map", systemImage: "map")
+                }
+            
+            LocationView()
+                .tabItem {
+                    Label("UWB", systemImage: "airtag")
+                }
+        }
+    }
 }
+
+//#Preview {
+//    ContentView()
+//}

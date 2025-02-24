@@ -11,7 +11,7 @@ import CoreBluetooth    // Core Bluetooth Documentation: https://developer.apple
 
 // power efficient way to query locations on iOS or iPadOS devices, even when your app isn’t running. https://developer.apple.com/documentation/corelocation/creating-a-location-push-service-extension
 
-class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDelegate, CBPeripheralManagerDelegate {
+class AnchorLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate, CBPeripheralManagerDelegate {
     private let locationManager = CLLocationManager()       // Location
     
     // CBPeripheralManager: An object that manages and advertises peripheral services exposed by this app. NECESSARY FOR BLUETOOTH.
@@ -123,6 +123,7 @@ class LocationBluetoothManager: NSObject, ObservableObject, CLLocationManagerDel
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let locationData: [String: Any] = [
+            "timestamp": CFAbsoluteTimeGetCurrent(),
             "id": id,
             "name": name,
             "latitude": latitude,
