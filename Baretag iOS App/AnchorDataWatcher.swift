@@ -76,14 +76,9 @@ class AnchorDataWatcher: ObservableObject {
                 return
             }
 
-            // ✅ Print raw response for debugging
-//            print("📡 Raw API Response:")
-//            print(String(data: data, encoding: .utf8) ?? "❌ Invalid API response")
-
             do {
-                // ✅ Decode as a dictionary with an "anchors" key
                 struct APIResponse: Codable {
-                    let anchors: [Anchor]  // ✅ Only extract "anchors" array
+                    let anchors: [Anchor]
                 }
 
                 let decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
@@ -98,6 +93,7 @@ class AnchorDataWatcher: ObservableObject {
         }
         task.resume()
     }
+
 
 
 

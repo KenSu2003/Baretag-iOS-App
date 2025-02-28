@@ -212,23 +212,56 @@ struct MapView: View {
 
 
     private func deleteAnchor() {
-        guard let anchor = selectedAnchor else { return }
-        
-        let requestBody: [String: Any] = ["anchor_id": anchor.id]
-        
-        guard let url = URL(string: "\(BASE_URL)/delete_anchor") else { return }
+        guard let anchor = selectedAnchor else {
+            print("❌ No anchor selected for deletion")
+            return
+        }
+
+        // Only send the anchor_name, since user_id is already in the session on the server
+        let requestBody: [String: Any] = [
+            "anchor_name": anchor.name  // Send only the anchor's name
+        ]
+
+        print("📡 Sending Delete Request: \(requestBody)")
+
+        guard let url = URL(string: "\(BASE_URL)/delete_anchor") else {
+            print("❌ Invalid URL")
+            return
+        }
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        } catch {
+            print("❌ JSON Encoding Error: \(error)")
+            return
+        }
+
+        // Perform the network request
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("❌ Error deleting anchor: \(error)")
+                print("❌ Error deleting anchor: \(error.localizedDescription)")
                 return
             }
-            DispatchQueue.main.async {
-                self.anchorDataWatcher.fetchAnchors()  // ✅ Fetch only once after deletion
+
+            guard let data = data else {
+                print("❌ No data received from server")
+                return
+            }
+
+            do {
+                let jsonResponse = try JSONSerialization.jsonObject(with: data, options: [])
+                print("📡 Server Response: \(jsonResponse)")
+
+                DispatchQueue.main.async {
+                    self.selectedAnchor = nil  // ✅ Prevent crash by removing reference
+                    self.anchorDataWatcher.fetchAnchors()  // ✅ Refresh UI after deletion
+                }
+            } catch {
+                print("❌ JSON Decoding Error: \(error)")
             }
         }.resume()
     }
