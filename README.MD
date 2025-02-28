@@ -15,7 +15,7 @@
 
 ## 📱 Screenshots  
 
-*(Optional: Add screenshots here to showcase the UI.)*  
+*To be uploaded*
 
 ## 🛠 Installation  
 
