@@ -32,7 +32,7 @@ class AnchorDataWatcher: ObservableObject {
         timer?.invalidate()
     }
 
-    private func fetchAnchors() {
+    func fetchAnchors() {
         if useLocalFile {
             fetchLocalAnchors()
         } else {

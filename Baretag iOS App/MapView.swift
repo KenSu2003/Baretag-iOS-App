@@ -16,24 +16,27 @@ import Combine
 struct MapView: View {
 
     @StateObject private var tagDataWatcher = TagDataWatcher(useLocalFile: false)
+    @StateObject private var anchorDataWatcher = AnchorDataWatcher(useLocalFile: false)
     @StateObject private var userLocationManager = UserLocationManager()  // Real-time GPS location
+
     @State private var centerCoordinateRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),  // Initial location
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     )
+    
     @State private var isMapLocked = false  // Start unlocked by default
-    @State private var recenterTriggered = false  // Tracks if map movement is caused by recentering
-    @State private var recenterTarget: CLLocationCoordinate2D?  // Store the target center when re-centering programmatically
-    @State private var previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291))
-    private let recenterTolerance: Double = 5.0  // 5 meters tolerance to avoid false unlocks
+    @State private var selectedAnchor: MapAnnotationItem?
+    @State private var showAnchorOptions = false
+    @State private var anchorName = ""
+    @State private var anchorLatitude = 0.0
+    @State private var anchorLongitude = 0.0
 
-    // ✅ Timer to trigger updates every 5 seconds
+    private let recenterTolerance: Double = 5.0  // 5 meters tolerance to avoid false unlocks
     private var updateTimer = Timer.publish(every: 5.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack {
             ZStack {
-                // Main map view with dynamic annotations
                 Map(coordinateRegion: $centerCoordinateRegion, annotationItems: mapAnnotations) { item in
                     MapAnnotation(coordinate: item.coordinate) {
                         if item.type == .user {
@@ -44,16 +47,25 @@ struct MapView: View {
                             Image(systemName: "mappin.circle.fill")
                                 .foregroundColor(.red)
                                 .font(.title)
+                        } else if item.type == .anchor {
+                            Image(systemName: "flag.fill")
+                                .foregroundColor(.green)
+                                .font(.title)
+                                .onLongPressGesture {
+                                    selectedAnchor = item
+                                    anchorName = item.name ?? ""
+                                    anchorLatitude = item.coordinate.latitude
+                                    anchorLongitude = item.coordinate.longitude
+                                    showAnchorOptions = true
+                                }
                         }
                     }
                 }
                 .edgesIgnoringSafeArea(.top)
                 .onReceive(updateTimer) { _ in
                     print("🔄 Timer-based update triggered.")
-                    tagDataWatcher.startUpdating()  // Automatically fetch new tag data
-                }
-                .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateRegion.center)) { newCenterWrapper in
-                    detectMapMovement(newCenterWrapper.coordinate)
+                    tagDataWatcher.startUpdating()
+                    anchorDataWatcher.startUpdating()
                 }
 
                 VStack {
@@ -61,11 +73,7 @@ struct MapView: View {
                     
                     HStack {
                         Spacer()
-
-                        // Lock/Unlock Button with consistent state updates
-                        Button(action: {
-                            toggleMapLock()
-                        }) {
+                        Button(action: { toggleMapLock() }) {
                             Image(systemName: isMapLocked ? "location.north.fill" : "scope")
                                 .font(.title2)
                                 .padding()
@@ -79,7 +87,6 @@ struct MapView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            // Tag slide bar at the bottom
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
                     ForEach(tagDataWatcher.tagLocations, id: \.id) { tag in
@@ -89,7 +96,7 @@ struct MapView: View {
                                 .frame(width: 40, height: 40)
                                 .foregroundColor(.blue)
                                 .onTapGesture {
-                                    zoomToTag(tag: tag)  // Zoom to the selected tag’s location
+                                    zoomToTag(tag: tag)
                                 }
                             Text(tag.name)
                                 .font(.caption)
@@ -99,88 +106,111 @@ struct MapView: View {
                 }
                 .padding()
             }
-            .background(Color(UIColor.systemGray6))  // Light background for tag section
+            .background(Color(UIColor.systemGray6))
         }
         .onAppear {
             print("🔓 Initializing map in unlocked state.")
-            tagDataWatcher.startUpdating()  // Start fetching tag updates on appear
+            tagDataWatcher.startUpdating()
+            anchorDataWatcher.startUpdating()
+        }
+        .alert("Anchor Options", isPresented: $showAnchorOptions) {
+            TextField("Anchor Name", text: $anchorName)
+            TextField("Latitude", value: $anchorLatitude, format: .number)
+            TextField("Longitude", value: $anchorLongitude, format: .number)
+            
+            Button("Save Changes") { updateAnchor() }
+            Button("Delete", role: .destructive) { deleteAnchor() }
+            Button("Cancel", role: .cancel) {}
         }
     }
 
-    // Toggle between map lock and unlock
     private func toggleMapLock() {
         isMapLocked.toggle()
-
         if isMapLocked {
             print("🔒 Map locked: Re-centering on user location.")
-            recenterTriggered = true  // Set flag to indicate programmatic recentering
-            recenterTarget = userLocationManager.userLocation?.coordinate  // Store the target location
-            updateCenterCoordinateBasedOnLock()
+            if let userLocation = userLocationManager.userLocation?.coordinate {
+                centerCoordinateRegion.center = userLocation
+                centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
+            }
         } else {
             print("🔓 Map unlocked manually.")
         }
     }
 
-    // Detect when the map has been manually moved by comparing new and previous coordinates
-    private func detectMapMovement(_ newCenter: CLLocationCoordinate2D) {
-        // If recentering was triggered and we are still within the tolerance, ignore the movement
-        if let target = recenterTarget, calculateDistance(from: target, to: newCenter) < recenterTolerance {
-            print("📍 Ignoring map movement within tolerance during recentering.")
-            return
-        }
-
-        // Reset recenter target after we leave the tolerance
-        recenterTarget = nil
-
-        let distance = calculateDistance(from: previousCenterCoordinateWrapper.coordinate, to: newCenter)
-
-        print("📍 Detected map movement. Distance moved: \(distance) meters")
-
-        // If the user has moved the map more than 5 meters, unlock the map
-        if distance > 5.0 {
-            print("🔓 Map unlocked due to manual movement.")
-            isMapLocked = false  // Automatically unlock the map
-        }
-
-        previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: newCenter)  // Update the previous coordinate
-    }
-
-    // Calculate the distance between two coordinates
-    private func calculateDistance(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) -> Double {
-        let fromLocation = CLLocation(latitude: from.latitude, longitude: from.longitude)
-        let toLocation = CLLocation(latitude: to.latitude, longitude: to.longitude)
-        return fromLocation.distance(from: toLocation)
-    }
-
-    private func updateCenterCoordinateBasedOnLock() {
-        if let userLocation = userLocationManager.userLocation {
-            centerCoordinateRegion.center = userLocation.coordinate
-            centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
-        }
-    }
-
     private func zoomToTag(tag: BareTag) {
         print("🔓 Unlocking map and zooming to tag: \(tag.name)")
-        isMapLocked = false  // Unlock the map when zooming to a tag
+        isMapLocked = false
         centerCoordinateRegion.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
         centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
     }
 
-    // Dynamic annotations for the map
     private var mapAnnotations: [MapAnnotationItem] {
         var annotations: [MapAnnotationItem] = []
 
-        // Add user location if available
+        // ✅ Fix: Provide a default name for the user location
         if let userLocation = userLocationManager.userLocation {
-            annotations.append(MapAnnotationItem(type: .user, coordinate: userLocation.coordinate))
+            annotations.append(MapAnnotationItem(type: .user, coordinate: userLocation.coordinate, name: "User"))
         }
 
-        // Add all tag locations
         for tag in tagDataWatcher.tagLocations {
-            annotations.append(MapAnnotationItem(type: .tag, coordinate: CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)))
+            annotations.append(MapAnnotationItem(type: .tag, coordinate: tag.coordinate, name: tag.name))
+        }
+
+        for anchor in anchorDataWatcher.anchors {
+            annotations.append(MapAnnotationItem(type: .anchor, coordinate: CLLocationCoordinate2D(latitude: anchor.latitude, longitude: anchor.longitude), name: anchor.name))
         }
 
         return annotations
+    }
+
+
+    private func updateAnchor() {
+        guard let anchor = selectedAnchor else { return }
+        
+        let requestBody: [String: Any] = [
+            "anchor_name": anchor.name ?? "",
+            "new_anchor_name": anchorName,
+            "latitude": anchorLatitude,
+            "longitude": anchorLongitude
+        ]
+        
+        guard let url = URL(string: "http://yourserver.com/edit_anchor") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error updating anchor: \(error)")
+                return
+            }
+            DispatchQueue.main.async {
+                anchorDataWatcher.fetchAnchors()
+            }
+        }.resume()
+    }
+
+    private func deleteAnchor() {
+        guard let anchor = selectedAnchor else { return }
+        
+        let requestBody: [String: Any] = ["anchor_id": anchor.id]
+        
+        guard let url = URL(string: "http://yourserver.com/delete_anchor") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error deleting anchor: \(error)")
+                return
+            }
+            DispatchQueue.main.async {
+                anchorDataWatcher.fetchAnchors()
+            }
+        }.resume()
     }
 }
 
@@ -209,7 +239,7 @@ struct BareTag: Identifiable, Codable {
 
 // Enum to distinguish between user and tag annotations
 enum AnnotationType {
-    case user, tag
+    case user, tag, anchor
 }
 
 // Annotation model for user and tag locations
@@ -217,4 +247,5 @@ struct MapAnnotationItem: Identifiable {
     let id = UUID()
     let type: AnnotationType
     let coordinate: CLLocationCoordinate2D
+    let name: String?
 }
