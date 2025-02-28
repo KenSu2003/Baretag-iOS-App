@@ -1,7 +1,7 @@
 
 # BareTag iOS App  
 
-![BareTag Logo](https://your-logo-url.com) *(Optional: Add a logo if available)*  
+![BareTag Logo](https://your-logo-url.com)
 
 **BareTag** is an iOS application designed to work with the BareTag tracking system. It helps users keep track of their valuable items using Bluetooth technology.  
 
