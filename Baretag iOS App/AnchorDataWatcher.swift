@@ -11,7 +11,8 @@ import Combine
 class AnchorDataWatcher: ObservableObject {
     @Published var anchors: [Anchor] = []
 
-    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/anchors.json"  // Replace with actual URL
+//    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/anchors.json"
+    private let serverURL = "https://vital-dear-rattler.ngrok-free.app/get_anchors"
     private let localFilePath = "/Users/kensu/Documents/anchors.json"  // Local file path
     private var timer: Timer?
     private var useLocalFile: Bool  // Toggle between server and local file
@@ -32,7 +33,7 @@ class AnchorDataWatcher: ObservableObject {
         timer?.invalidate()
     }
 
-    func fetchAnchors() {
+    public func fetchAnchors() {
         if useLocalFile {
             fetchLocalAnchors()
         } else {
@@ -60,9 +61,11 @@ class AnchorDataWatcher: ObservableObject {
             return
         }
 
+        print("🚀 Fetching anchors from \(serverURL)...")
+
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
-                print("❌ Error fetching JSON from server: \(error.localizedDescription)")
+                print("❌ Error fetching anchors: \(error.localizedDescription)")
                 return
             }
 
@@ -71,16 +74,30 @@ class AnchorDataWatcher: ObservableObject {
                 return
             }
 
+            // ✅ Print raw response for debugging
+//            print("📡 Raw API Response:")
+//            print(String(data: data, encoding: .utf8) ?? "❌ Invalid API response")
+
             do {
-                let anchors = try JSONDecoder().decode([Anchor].self, from: data)
-                DispatchQueue.main.async {
-                    self.anchors = anchors
+                // ✅ Decode as a dictionary with an "anchors" key
+                struct APIResponse: Codable {
+                    let anchors: [Anchor]  // ✅ Only extract "anchors" array
                 }
-                print("✅ Fetched and decoded anchor data from server.")
+
+                let decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
+
+                DispatchQueue.main.async {
+                    self.anchors = decodedResponse.anchors
+                }
+                print("✅ Successfully fetched anchors: \(decodedResponse.anchors)")
             } catch {
                 print("❌ Decoding error: \(error)")
             }
         }
         task.resume()
     }
+
+
+
+
 }

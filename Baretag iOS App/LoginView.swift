@@ -16,52 +16,53 @@ struct LoginView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
-                Text("BareTag Login")
-                    .font(.largeTitle)
-                    .bold()
-                    .padding(.bottom, 20)
-                
-                TextField("Username", text: $username)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
-                
-                SecureField("Password", text: $password)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
-                
-                if let errorMessage = errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
+            ScrollView {
+                VStack {
+                    Text("BareTag Login")
+                        .font(.largeTitle)
+                        .bold()
+                        .padding(.bottom, 20)
+
+                    TextField("Username", text: $username)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
-                }
-                
-                Button(action: loginUser) {
-                    Text("Login")
-                        .font(.headline)
-                        .foregroundColor(.white)
+
+                    SecureField("Password", text: $password)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .cornerRadius(10)
+
+                    if let errorMessage = errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
+                    }
+
+                    Button(action: loginUser) {
+                        Text("Login")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                    }
+                    .padding()
+
+                    Button(action: { showRegister = true }) {
+                        Text("Create an Account")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                            .padding()
+                    }
+                    .sheet(isPresented: $showRegister) {
+                        RegisterView()
+                    }
                 }
                 .padding()
-                
-                // ✅ Register Button
-                Button(action: {
-                    showRegister = true
-                }) {
-                    Text("Create an Account")
-                        .font(.headline)
-                        .foregroundColor(.blue)
-                        .padding()
-                }
-                .sheet(isPresented: $showRegister) {
-                    RegisterView()
-                }
             }
-            .padding()
+            .ignoresSafeArea(.keyboard)  // ✅ Ensures keyboard doesn’t mess with layout
         }
+
     }
     
     

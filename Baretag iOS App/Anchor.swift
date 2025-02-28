@@ -12,9 +12,8 @@ struct Anchor: Identifiable, Codable {
     let name: String
     let latitude: Double
     let longitude: Double
-    let position: CGPoint  // Combine positionX and positionY into a CGPoint
+    let position: CGPoint  // ✅ Combine positionX and positionY into a CGPoint
 
-    // Custom decoding to map `positionX` and `positionY` to `position`
     enum CodingKeys: String, CodingKey {
         case id, name, latitude, longitude, positionX, positionY
     }
@@ -25,14 +24,13 @@ struct Anchor: Identifiable, Codable {
         name = try container.decode(String.self, forKey: .name)
         latitude = try container.decode(Double.self, forKey: .latitude)
         longitude = try container.decode(Double.self, forKey: .longitude)
-        
-        // Decode `positionX` and `positionY` and combine them into a CGPoint
-        let x = try container.decode(CGFloat.self, forKey: .positionX)
-        let y = try container.decode(CGFloat.self, forKey: .positionY)
+
+        // ✅ If `positionX` or `positionY` are missing, default to `0`
+        let x = try container.decodeIfPresent(CGFloat.self, forKey: .positionX) ?? 0.0
+        let y = try container.decodeIfPresent(CGFloat.self, forKey: .positionY) ?? 0.0
         position = CGPoint(x: x, y: y)
     }
 
-    // Custom encoding to split `position` into `positionX` and `positionY`
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)

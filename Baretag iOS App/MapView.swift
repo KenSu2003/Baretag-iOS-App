@@ -174,7 +174,7 @@ struct MapView: View {
             "longitude": anchorLongitude
         ]
         
-        guard let url = URL(string: "http://yourserver.com/edit_anchor") else { return }
+        guard let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/edit_anchor") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
@@ -196,7 +196,7 @@ struct MapView: View {
         
         let requestBody: [String: Any] = ["anchor_id": anchor.id]
         
-        guard let url = URL(string: "http://yourserver.com/delete_anchor") else { return }
+        guard let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/delete_anchor") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
