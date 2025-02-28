@@ -9,6 +9,8 @@
 
 import SwiftUI
 
+var BASE_URL = "http://172.24.131.25:5000"
+
 struct ContentView: View {
     @State private var isAuthenticated = false
 

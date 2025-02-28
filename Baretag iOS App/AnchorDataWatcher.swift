@@ -12,7 +12,7 @@ class AnchorDataWatcher: ObservableObject {
     @Published var anchors: [Anchor] = []
 
 //    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/anchors.json"
-    private let serverURL = "https://vital-dear-rattler.ngrok-free.app/get_anchors"
+    private let serverURL = "\(BASE_URL)/get_anchors"
     private let localFilePath = "/Users/kensu/Documents/anchors.json"  // Local file path
     private var timer: Timer?
     private var useLocalFile: Bool  // Toggle between server and local file

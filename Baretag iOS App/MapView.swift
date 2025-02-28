@@ -166,37 +166,46 @@ struct MapView: View {
 
     private func updateAnchor() {
         guard let anchor = selectedAnchor else { return }
-        
+
+        // ✅ Get `user_id` from `UserDefaults`
+        guard let userID = UserDefaults.standard.value(forKey: "user_id") as? Int else {
+            print("❌ Error: No user_id found")
+            return
+        }
+
         let requestBody: [String: Any] = [
+            "user_id": userID,  // ✅ Include user_id
             "anchor_name": anchor.name ?? "",
             "new_anchor_name": anchorName,
             "latitude": anchorLatitude,
             "longitude": anchorLongitude
         ]
-        
-        guard let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/edit_anchor") else { return }
+
+        guard let url = URL(string: "\(BASE_URL)/edit_anchor") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("Error updating anchor: \(error)")
+                print("❌ Error updating anchor: \(error)")
                 return
             }
             DispatchQueue.main.async {
                 anchorDataWatcher.fetchAnchors()
             }
+            print("✅ Anchor updated successfully!")
         }.resume()
     }
+
 
     private func deleteAnchor() {
         guard let anchor = selectedAnchor else { return }
         
         let requestBody: [String: Any] = ["anchor_id": anchor.id]
         
-        guard let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/delete_anchor") else { return }
+        guard let url = URL(string: "\(BASE_URL)/delete_anchor") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
@@ -208,7 +217,9 @@ struct MapView: View {
                 return
             }
             DispatchQueue.main.async {
-                anchorDataWatcher.fetchAnchors()
+                Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
+                    anchorDataWatcher.fetchAnchors()
+                }
             }
         }.resume()
     }

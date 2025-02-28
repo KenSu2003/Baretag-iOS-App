@@ -12,8 +12,11 @@ struct LoginView: View {
     @State private var password: String = ""
     @Binding var isAuthenticated: Bool
     @State private var errorMessage: String?
-    @State private var showRegister = false  // ✅ Control navigation to RegisterView
-    
+    @State private var showRegister = false
+
+    // ✅ Store user_id globally using `UserDefaults`
+    @AppStorage("user_id") private var userID: Int?
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -60,60 +63,61 @@ struct LoginView: View {
                 }
                 .padding()
             }
-            .ignoresSafeArea(.keyboard)  // ✅ Ensures keyboard doesn’t mess with layout
+            .ignoresSafeArea(.keyboard)
         }
-
     }
     
-    
-    // Login User
+    // ✅ Store user_id in `UserDefaults` after login
     func loginUser() {
-        guard let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/login") else {
+        guard let url = URL(string: "\(BASE_URL)/login") else {
             errorMessage = "Invalid server URL"
             return
         }
 
-        let body: [String: Any] = ["username": username, "password": password]
-        let jsonData = try? JSONSerialization.data(withJSONObject: body)
-
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = jsonData
 
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let httpResponse = response as? HTTPURLResponse, let data = data, error == nil else {
+        let body: [String: Any] = ["username": username, "password": password]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
                 DispatchQueue.main.async {
-                    errorMessage = "Network error: \(error?.localizedDescription ?? "Unknown error")"
+                    self.errorMessage = "Login failed: \(error.localizedDescription)"
                 }
                 return
             }
 
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Invalid response from server"
+                }
+                return
+            }
+
+            // ✅ Debugging: Print raw JSON response
+            let responseString = String(data: data, encoding: .utf8) ?? "No Response"
+            print("📡 Server Response: \(responseString)")
+
             do {
                 if let jsonResponse = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     DispatchQueue.main.async {
-                        if httpResponse.statusCode == 200 {
-                            if let userID = jsonResponse["user_id"] as? Int {
-                                isAuthenticated = true
-                            } else {
-                                errorMessage = "Unexpected response format"
-                            }
-                        } else if httpResponse.statusCode == 401 {
-                            errorMessage = jsonResponse["error"] as? String ?? "Invalid username or password"
+                        if let userID = jsonResponse["user_id"] as? Int {
+                            UserDefaults.standard.set(userID, forKey: "user_id")  // ✅ Store user ID
+                            isAuthenticated = true
                         } else {
-                            errorMessage = "Unexpected server response"
+                            self.errorMessage = "Unexpected response format"
                         }
                     }
                 }
             } catch {
                 DispatchQueue.main.async {
-                    errorMessage = "Invalid response from server"
+                    self.errorMessage = "Invalid JSON response"
                 }
             }
-        }.resume()
+        }
+        task.resume()
     }
-}
 
-//#Preview {
-//    LoginView(isAuthenticated: .constant(false))
-//}
+}
