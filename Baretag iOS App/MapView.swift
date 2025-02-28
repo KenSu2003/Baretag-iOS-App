@@ -164,17 +164,10 @@ struct MapView: View {
     }
 
 
-    private func updateAnchor() {
+    func updateAnchor() {
         guard let anchor = selectedAnchor else { return }
 
-        // ✅ Get `user_id` from `UserDefaults`
-        guard let userID = UserDefaults.standard.value(forKey: "user_id") as? Int else {
-            print("❌ Error: No user_id found")
-            return
-        }
-
         let requestBody: [String: Any] = [
-            "user_id": userID,  // ✅ Include user_id
             "anchor_name": anchor.name ?? "",
             "new_anchor_name": anchorName,
             "latitude": anchorLatitude,
@@ -187,16 +180,31 @@ struct MapView: View {
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        // ✅ Ensure session cookies are sent
+        let session = URLSession.shared
+        let task = session.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("❌ Error updating anchor: \(error)")
+                print("❌ Error updating anchor: \(error.localizedDescription)")
                 return
             }
-            DispatchQueue.main.async {
-                anchorDataWatcher.fetchAnchors()
+
+            guard let data = data else {
+                print("❌ No data received from server")
+                return
             }
-            print("✅ Anchor updated successfully!")
-        }.resume()
+
+            do {
+                let jsonResponse = try JSONSerialization.jsonObject(with: data, options: [])
+                print("📡 Server Response: \(jsonResponse)")
+                
+                DispatchQueue.main.async {
+                    self.anchorDataWatcher.fetchAnchors()  // ✅ Fetch updated anchors after update
+                }
+            } catch {
+                print("❌ JSON Decoding Error: \(error)")
+            }
+        }
+        task.resume()
     }
 
 
