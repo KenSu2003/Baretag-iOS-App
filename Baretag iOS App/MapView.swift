@@ -111,8 +111,11 @@ struct MapView: View {
         .onAppear {
             print("🔓 Initializing map in unlocked state.")
             tagDataWatcher.startUpdating()
-            anchorDataWatcher.startUpdating()
+            if anchorDataWatcher.anchors.isEmpty {  // ✅ Only update if no anchors are loaded
+                anchorDataWatcher.startUpdating()
+            }
         }
+
         .alert("Anchor Options", isPresented: $showAnchorOptions) {
             TextField("Anchor Name", text: $anchorName)
             TextField("Latitude", value: $anchorLatitude, format: .number)
@@ -221,16 +224,15 @@ struct MapView: View {
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("Error deleting anchor: \(error)")
+                print("❌ Error deleting anchor: \(error)")
                 return
             }
             DispatchQueue.main.async {
-                Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-                    anchorDataWatcher.fetchAnchors()
-                }
+                self.anchorDataWatcher.fetchAnchors()  // ✅ Fetch only once after deletion
             }
         }.resume()
     }
+
 }
 
 // **Wrapper for CLLocationCoordinate2D to make it conform to Equatable**

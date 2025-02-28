@@ -23,11 +23,13 @@ class AnchorDataWatcher: ObservableObject {
     }
 
     func startUpdating() {
-        // Refresh anchor data every 5 seconds
-        timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            self.fetchAnchors()
+        if timer == nil {  // ✅ Prevent duplicate timers
+            timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
+                self.fetchAnchors()
+            }
         }
     }
+
 
     deinit {
         timer?.invalidate()

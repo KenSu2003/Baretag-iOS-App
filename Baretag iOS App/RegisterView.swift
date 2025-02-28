@@ -70,7 +70,7 @@ struct RegisterView: View {
             return
         }
 
-        guard let url = URL(string: "https://vital-dear-rattler.ngrok-free.app/registration") else {
+        guard let url = URL(string: "\(BASE_URL)/registration") else {
             errorMessage = "Invalid server URL"
             return
         }
