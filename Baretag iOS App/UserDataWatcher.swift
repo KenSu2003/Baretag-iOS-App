@@ -12,7 +12,6 @@ import Combine
 class UserDataWatcher: ObservableObject {
     @Published var userLocation: CLLocation?
     
-    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/user.json"
     private let localFilePath = "/Users/kensu/Documents/user.json"
     private var timer: Timer?
     private let useLocalFile: Bool
@@ -39,11 +38,8 @@ class UserDataWatcher: ObservableObject {
 
     private func fetchUserLocation() {
         if useLocalFile {
-            fetchLocalUserLocation()  // ✅ Only use local JSON
-        } else if useServer {
-            fetchServerUserLocation() // ✅ Fetch from the server
+            fetchLocalUserLocation()
         } else {
-            // ✅ Only use GPS if neither local nor server is selected
             if let gpsLocation = locationManager.userLocation {
                 DispatchQueue.main.async {
                     self.userLocation = gpsLocation
@@ -54,7 +50,6 @@ class UserDataWatcher: ObservableObject {
             }
         }
     }
-
 
 
     private func fetchLocalUserLocation() {
@@ -70,37 +65,6 @@ class UserDataWatcher: ObservableObject {
         } catch {
             print("❌ Failed to load local user location: \(error)")
         }
-    }
-
-    private func fetchServerUserLocation() {
-        guard let url = URL(string: serverURL) else {
-            print("❌ Invalid server URL: \(serverURL)")
-            return
-        }
-
-        let task = URLSession.shared.dataTask(with: url) { data, _, error in
-            if let error = error {
-                print("❌ Network error: \(error.localizedDescription)")
-                return
-            }
-
-            guard let data = data else {
-                print("❌ No data received from server")
-                return
-            }
-
-            do {
-                let locationData = try JSONDecoder().decode(SimulatedLocation.self, from: data)
-                let location = CLLocation(latitude: locationData.latitude, longitude: locationData.longitude)
-                DispatchQueue.main.async {
-                    self.userLocation = location
-                    print("📡 Updated user location from server: \(location.coordinate.latitude), \(location.coordinate.longitude)")
-                }
-            } catch {
-                print("❌ Decoding error: \(error)")
-            }
-        }
-        task.resume()
     }
 }
 

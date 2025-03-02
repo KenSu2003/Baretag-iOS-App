@@ -34,21 +34,21 @@ struct AnchorLocatorView: View {
                 .padding(.horizontal)
 
             // Fixed Numeric Input Fields (X, Y Coordinates)
-            TextField("Enter x Coordinate", text: Binding(
-                get: { String(positionX) },
-                set: { positionX = Double($0) ?? -1.0 }
-            ))
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .padding(.horizontal)
-            .keyboardType(.decimalPad)  // Only allow the number pad
-
-            TextField("Enter y Coordinate", text: Binding(
-                get: { String(positionY) },
-                set: { positionY = Double($0) ?? -1.0 }
-            ))
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .padding(.horizontal)
-            .keyboardType(.decimalPad)  // Only allow the number pad
+//            TextField("Enter x Coordinate", text: Binding(
+//                get: { String(positionX) },
+//                set: { positionX = Double($0) ?? -1.0 }
+//            ))
+//            .textFieldStyle(RoundedBorderTextFieldStyle())
+//            .padding(.horizontal)
+//            .keyboardType(.decimalPad)  // Only allow the number pad
+//
+//            TextField("Enter y Coordinate", text: Binding(
+//                get: { String(positionY) },
+//                set: { positionY = Double($0) ?? -1.0 }
+//            ))
+//            .textFieldStyle(RoundedBorderTextFieldStyle())
+//            .padding(.horizontal)
+//            .keyboardType(.decimalPad)  // Only allow the number pad
 
             // Fetch and Forward Location Button (Centered)
             Button(action: {
