@@ -8,6 +8,22 @@
 import Foundation
 import CoreGraphics
 
+// ✅ Model for API response
+struct TagLocationResponse: Codable {
+    let recentTagLocations: [TagLocation]?
+    let message: String?
+}
+
+// ✅ Model for individual tag locations
+struct TagLocation: Codable, Equatable {
+    let tagID: String
+    let tagName: String
+    let latitude: Double
+    let longitude: Double
+    let timestamp: String
+}
+
+// ✅ Modify `Tag` struct if needed (optional)
 struct Tag: Codable, Equatable {
     let id: String
     let name: String
@@ -29,6 +45,7 @@ struct Tag: Codable, Equatable {
         y = try container.decodeIfPresent(CGFloat.self, forKey: .y) ?? 0.0
     }
 }
+
 
 
 func copyJSONToDocuments() -> URL? {

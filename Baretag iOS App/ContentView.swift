@@ -30,6 +30,11 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Localizer", systemImage: "signpost.right.and.left.circle.fill")
                 }
+            TagLocatorView()
+                .tabItem {
+                    Label("Tag Locator", systemImage: "tag")
+                }
+                
 
             MapView()
                 .tabItem {

@@ -8,11 +8,14 @@
 import SwiftUI
 
 struct RegisterView: View {
+    @Environment(\.presentationMode) var presentationMode  // To close view on success
+
+    
     @State private var username: String = ""
     @State private var password: String = ""
     @State private var confirmPassword: String = ""
     @State private var errorMessage: String?
-    @State private var successMessage: String?  // ✅ Change from `let` to `@State`
+    @State private var successMessage: String?
     
     var body: some View {
         VStack {
@@ -95,11 +98,14 @@ struct RegisterView: View {
                 if let jsonResponse = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     DispatchQueue.main.async {
                         if httpResponse.statusCode == 201, let success = jsonResponse["message"] as? String {
-                            successMessage = success  // ✅ Now `successMessage` is updatable
+                            successMessage = success
                             errorMessage = nil
                         } else if httpResponse.statusCode == 400 || httpResponse.statusCode == 409, let error = jsonResponse["error"] as? String {
                             errorMessage = error
                             successMessage = nil
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {  // ✅ Delay for user to see message
+                                presentationMode.wrappedValue.dismiss()  // ✅ Close view
+                            }
                         } else {
                             errorMessage = "Unexpected server response."
                         }
