@@ -41,10 +41,10 @@ struct MainTabView: View {
                     Label("Map", systemImage: "map")
                 }
             
-            LocationView()
-                .tabItem {
-                    Label("UWB", systemImage: "airtag")
-                }
+//            LocationView()
+//                .tabItem {
+//                    Label("UWB", systemImage: "airtag")
+//                }
         }
     }
 }
