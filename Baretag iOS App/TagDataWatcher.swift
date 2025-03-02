@@ -16,12 +16,15 @@ class TagDataWatcher: ObservableObject {
     }
 
     func startUpdating() {
-        print("⏰ Starting timer to fetch data every 5 seconds.")
-        timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            print("🔄 Timer fired: fetching data...")
-            self.fetchData()
+        if timer == nil {  // ✅ Prevent duplicate timers
+            print("⏰ Starting tag data update timer...")
+            timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
+                print("🔄 Timer fired: fetching tag data...")
+                self.fetchData()
+            }
         }
     }
+
 
     deinit {
         timer?.invalidate()

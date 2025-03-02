@@ -111,8 +111,11 @@ struct MapView: View {
         .onAppear {
             print("🔓 Initializing map in unlocked state.")
             tagDataWatcher.startUpdating()
-            if anchorDataWatcher.anchors.isEmpty {  // ✅ Only update if no anchors are loaded
+            if anchorDataWatcher.anchors.isEmpty {
                 anchorDataWatcher.startUpdating()
+            }
+            if anchorDataWatcher.anchors.isEmpty {
+                tagDataWatcher.startUpdating()
             }
         }
 
