@@ -26,16 +26,19 @@ struct ContentView: View {
 struct MainTabView: View {
     var body: some View {
         TabView {
+            
+            // Add Anchor
             AnchorLocatorView()
                 .tabItem {
                     Label("Localizer", systemImage: "signpost.right.and.left.circle.fill")
                 }
+            // Add Tag
             TagLocatorView()
                 .tabItem {
                     Label("Tag Locator", systemImage: "tag")
                 }
                 
-
+            // Map
             MapView()
                 .tabItem {
                     Label("Map", systemImage: "map")

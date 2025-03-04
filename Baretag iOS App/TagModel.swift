@@ -8,46 +8,55 @@
 import Foundation
 import CoreGraphics
 
-// ✅ Model for API response
-struct TagLocationResponse: Codable {
-    let recentTagLocations: [TagLocation]?
-    let message: String?
-}
-
 // ✅ Model for individual tag locations
 struct TagLocation: Codable, Equatable {
-    let tagID: String
-    let tagName: String
-    let latitude: Double
-    let longitude: Double
-    let timestamp: String
-}
-
-// ✅ Modify `Tag` struct if needed (optional)
-struct Tag: Codable, Equatable {
-    let id: String
+    let id: String?
     let name: String
     let latitude: Double
     let longitude: Double
-    let x: CGFloat
-    let y: CGFloat
+    let timestamp: String?
+   
 
-    // Provide default values for x and y during decoding if missing
+    // Define JSON keys explicitly
+    enum CodingKeys: String, CodingKey {
+        case id, name, latitude, longitude, timestamp
+    }
+
+    // Provide default values for if any of the keys are missing in the API response
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(String.self, forKey: .id)
+        id = try container.decodeIfPresent(String.self, forKey: .id)  // ✅ Now safely handles missing id
         name = try container.decode(String.self, forKey: .name)
         latitude = try container.decode(Double.self, forKey: .latitude)
         longitude = try container.decode(Double.self, forKey: .longitude)
+        timestamp = try container.decodeIfPresent(String.self, forKey: .timestamp)  // ✅ Also safely handles missing timestamp
+    }
 
-        // Default to 0.0 if x and y are not present in the JSON
-        x = try container.decodeIfPresent(CGFloat.self, forKey: .x) ?? 0.0
-        y = try container.decodeIfPresent(CGFloat.self, forKey: .y) ?? 0.0
+}
+
+// ✅ Helper struct to decode API response for multiple tag locations
+struct TagResponse: Codable {
+    let tags_location: [TagLocation]
+}
+
+// ✅ Debugging function to print API response before decoding
+func decodeTagResponse(from data: Data) {
+    do {
+        let responseString = String(data: data, encoding: .utf8)
+        print("📡 API Response: \(responseString ?? "No response")")  // ✅ Debug JSON output
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase  // ✅ Handles snake_case to camelCase
+        let decodedData = try decoder.decode(TagResponse.self, from: data)
+        
+        print("✅ Successfully Decoded Tags: \(decodedData.tags_location)")
+    } catch {
+        print("❌ JSON Decoding Error: \(error)")
     }
 }
 
 
-
+// ✅ Function to copy `tagData.json` to Documents directory (if not present)
 func copyJSONToDocuments() -> URL? {
     let fileManager = FileManager.default
     let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -75,14 +84,14 @@ func copyJSONToDocuments() -> URL? {
 }
 
 
-
-func loadTagData() -> Tag? {
+// ✅ Function to load JSON from `/Users/kensu/Documents/tagData.json`
+func loadTagData() -> TagLocation? {
     let customPath = "/Users/kensu/Documents/tagData.json"
     let url = URL(fileURLWithPath: customPath)
     
     do {
         let data = try Data(contentsOf: url)
-        let tag = try JSONDecoder().decode(Tag.self, from: data)
+        let tag = try JSONDecoder().decode(TagLocation.self, from: data)
         print("✅ JSON decoded successfully: \(tag)")
         return tag
     } catch {
@@ -90,4 +99,3 @@ func loadTagData() -> Tag? {
         return nil
     }
 }
-

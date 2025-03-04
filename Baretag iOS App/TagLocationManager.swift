@@ -3,14 +3,8 @@
 //  Baretag iOS App
 //
 //  Created by Ken Su on 3/2/25.
-//
 
-//
-//  TagLocationManager.swift
-//  Baretag iOS App
-//
-//  Created by Ken Su on 3/2/25.
-//
+//  Used for locating and adding tags using GPS
 
 import Foundation
 import CoreLocation

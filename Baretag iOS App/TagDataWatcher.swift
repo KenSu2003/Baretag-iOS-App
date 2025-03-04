@@ -5,7 +5,7 @@ class TagDataWatcher: ObservableObject {
     @Published var tagLocations: [BareTag] = []  // ✅ Store multiple tags
 
 //    private let serverURL = "https://baretag-tag-data.s3.us-east-2.amazonaws.com/tags.json"
-    private let serverURL = "\(BASE_URL)/get_tag_location"
+    private let serverURL = "\(BASE_URL)/get_tags"
     private let localFilePath = "/Users/kensu/Documents/tags.json"
     private var timer: Timer?
     private var useLocalFile: Bool
@@ -71,15 +71,15 @@ class TagDataWatcher: ObservableObject {
 
             do {
                 struct APIResponse: Codable {
-                    let recent_tag_locations: [BareTag]
+                    let tags_location: [BareTag]
                 }
 
                 let decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
 
                 DispatchQueue.main.async {
-                    self.tagLocations = decodedResponse.recent_tag_locations
+                    self.tagLocations = decodedResponse.tags_location
                 }
-                print("✅ Successfully fetched \(decodedResponse.recent_tag_locations.count) tags from server.")
+                print("✅ Successfully fetched \(decodedResponse.tags_location.count) tags from server.")
             } catch {
                 print("❌ JSON decoding error: \(error)")
             }
