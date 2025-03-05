@@ -281,7 +281,7 @@ struct CLLocationCoordinate2DWrapper: Equatable {
 }
 
 // Updated BareTag struct to include map coordinates
-struct BareTag: Identifiable, Codable {
+struct BareTag: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let latitude: Double

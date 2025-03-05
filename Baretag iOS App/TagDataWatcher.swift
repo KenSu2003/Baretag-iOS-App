@@ -77,14 +77,20 @@ class TagDataWatcher: ObservableObject {
                 let decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
 
                 DispatchQueue.main.async {
-                    self.tagLocations = decodedResponse.tags_location
+                    // ✅ Only update if data actually changed
+                    if self.tagLocations != decodedResponse.tags_location {
+                        print("🔄 Updating tags: Data has changed.")
+                        self.tagLocations = decodedResponse.tags_location
+                    } else {
+                        print("✅ No changes in tag data. Skipping update.")
+                    }
                 }
-                print("✅ Successfully fetched \(decodedResponse.tags_location.count) tags from server.")
             } catch {
                 print("❌ JSON decoding error: \(error)")
             }
         }
         task.resume()
     }
+
 
 }

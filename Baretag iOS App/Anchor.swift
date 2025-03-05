@@ -20,7 +20,14 @@ struct Anchor: Identifiable, Codable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(String.self, forKey: .id)
+        
+//        id = try container.decode(String.self, forKey: .id)
+        // ✅ Convert `id` from `Int` to `String`
+        if let intID = try? container.decode(Int.self, forKey: .id) {
+            id = String(intID)
+        } else {
+            id = try container.decode(String.self, forKey: .id)
+        }
         name = try container.decode(String.self, forKey: .name)
         latitude = try container.decode(Double.self, forKey: .latitude)
         longitude = try container.decode(Double.self, forKey: .longitude)
