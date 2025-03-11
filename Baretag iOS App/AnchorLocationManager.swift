@@ -38,7 +38,8 @@ class AnchorLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         // Location Manager
         locationManager.delegate = self                                         // Initialize Location Delegate
         locationManager.requestWhenInUseAuthorization()                         // Requests permission to use location services
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest               // Sets the location accuracy level to the highest
+//        locationManager.desiredAccuracy = kCLLocationAccuracyBest             // Sets the location accuracy level to the highest
+        locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
         
         // Bluetooth Manager
         peripheralManager = CBPeripheralManager(delegate: self, queue: nil)     // Initialize Bluetooth Delegate
@@ -142,10 +143,16 @@ class AnchorLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
                     print("❌ Request Error: \(error.localizedDescription)")
                 } else if let httpResponse = response as? HTTPURLResponse {
                     print("✅ HTTP Status Code: \(httpResponse.statusCode)")
+                    if httpResponse.statusCode == 200 {
+                        self.status = "Location sent to server!"
+                    } else if (httpResponse.statusCode == 400){
+                        self.status = "Missing data (anchor_name, latitude, or longitude)"
+                    }
                 }
                 
                 if let data = data, let responseString = String(data: data, encoding: .utf8) {
                     print("📡 Server Response: \(responseString)")
+//                    self.status = "Server Response: \(responseString)"
                 }
             }
         }

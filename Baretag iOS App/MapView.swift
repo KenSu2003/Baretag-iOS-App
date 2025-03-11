@@ -15,24 +15,33 @@ import Combine
 
 struct MapView: View {
 
+    // Data Watcher
     @StateObject private var tagDataWatcher = TagDataWatcher(useLocalFile: false)
     @StateObject private var anchorDataWatcher = AnchorDataWatcher(useLocalFile: false)
     @StateObject private var userLocationManager = UserLocationManager()  // Real-time GPS location
 
+   
+    
+    // Centering Button Variables
     @State private var centerCoordinateRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),  // Initial location
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     )
-    
     @State private var isMapLocked = false  // Start unlocked by default
+    @State private var recenterTriggered = false  // Tracks if map movement is caused by recentering
+    @State private var recenterTarget: CLLocationCoordinate2D?  // Store the target center when re-centering programmatically
+    @State private var previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291))
+    private let recenterTolerance: Double = 10.0
+    
+    // Anchor Variables
     @State private var selectedAnchor: MapAnnotationItem?
     @State private var showAnchorOptions = false
     @State private var anchorName = ""
     @State private var anchorLatitude = 0.0
     @State private var anchorLongitude = 0.0
 
-    private let recenterTolerance: Double = 5.0  // 5 meters tolerance to avoid false unlocks
-    private var updateTimer = Timer.publish(every: 5.0, on: .main, in: .common).autoconnect()
+    // Timer Variables
+    private var updateTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack {
@@ -67,13 +76,16 @@ struct MapView: View {
                     tagDataWatcher.startUpdating()
                     anchorDataWatcher.startUpdating()
                 }
+                .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateRegion.center)) { newCenterWrapper in
+                                    detectMapMovement(newCenterWrapper.coordinate)
+                                }
 
                 VStack {
                     Spacer()
                     
                     HStack {
                         Spacer()
-                        Button(action: { toggleMapLock() }) {
+                        Button(action: { withAnimation{toggleMapLock()} }) {
                             Image(systemName: isMapLocked ? "location.north.fill" : "scope")
                                 .font(.title2)
                                 .padding()
@@ -81,6 +93,7 @@ struct MapView: View {
                                 .foregroundColor(.white)
                                 .cornerRadius(8)
                         }
+                        .id(isMapLocked)
                         .padding()
                     }
                 }
@@ -117,6 +130,8 @@ struct MapView: View {
             if anchorDataWatcher.anchors.isEmpty {
                 tagDataWatcher.startUpdating()
             }
+            previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: centerCoordinateRegion.center)  // Initialize last coordinate
+
         }
 
         .alert("Anchor Options", isPresented: $showAnchorOptions) {
@@ -132,16 +147,66 @@ struct MapView: View {
 
     private func toggleMapLock() {
         isMapLocked.toggle()
-        if isMapLocked {
-            print("🔒 Map locked: Re-centering on user location.")
-            if let userLocation = userLocationManager.userLocation?.coordinate {
-                centerCoordinateRegion.center = userLocation
-                centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
+        
+        print("🔄 Map lock state changed: \(isMapLocked ? "🔒 Locked" : "🔓 Unlocked")")
+
+            DispatchQueue.main.async {
+                self.isMapLocked = self.isMapLocked // ✅ Force SwiftUI refresh
             }
+        
+        if isMapLocked {
+//            print("🔒 Map locked: Re-centering on user location.")
+//            if let userLocation = userLocationManager.userLocation?.coordinate {
+//                centerCoordinateRegion.center = userLocation
+//                centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
+//            }
+            print("🔒 Map locked: Re-centering on user location.")
+            recenterTriggered = true  // Set flag to indicate programmatic recentering
+            recenterTarget = userLocationManager.userLocation?.coordinate  // Store the target location
+            updateCenterCoordinateBasedOnLock()
         } else {
             print("🔓 Map unlocked manually.")
         }
     }
+    
+    // Detect when the map has been manually moved by comparing new and previous coordinates
+    private func detectMapMovement(_ newCenter: CLLocationCoordinate2D) {
+        // If recentering was triggered and we are still within the tolerance, ignore the movement
+        if let target = recenterTarget, calculateDistance(from: target, to: newCenter) < recenterTolerance {
+            print("📍 Ignoring map movement within tolerance during recentering.")
+            return
+        }
+
+        // Reset recenter target after we leave the tolerance
+        recenterTarget = nil
+
+        let distance = calculateDistance(from: previousCenterCoordinateWrapper.coordinate, to: newCenter)
+
+        print("📍 Detected map movement. Distance moved: \(distance) meters")
+
+        // If the user has moved the map more than 5 meters, unlock the map
+        if distance > recenterTolerance {
+            print("🔓 Map unlocked due to manual movement.")
+            isMapLocked = false  // Automatically unlock the map
+        }
+
+        previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: newCenter)  // Update the previous coordinate
+    }
+
+    // Calculate the distance between two coordinates
+    private func calculateDistance(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) -> Double {
+        let fromLocation = CLLocation(latitude: from.latitude, longitude: from.longitude)
+        let toLocation = CLLocation(latitude: to.latitude, longitude: to.longitude)
+        return fromLocation.distance(from: toLocation)
+    }
+
+    private func updateCenterCoordinateBasedOnLock() {
+        if let userLocation = userLocationManager.userLocation {
+            centerCoordinateRegion.center = userLocation.coordinate
+            centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
+        }
+    }
+
 
     private func zoomToTag(tag: BareTag) {
         print("🔓 Unlocking map and zooming to tag: \(tag.name)")

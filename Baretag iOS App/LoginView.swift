@@ -27,7 +27,10 @@ struct LoginView: View {
                         .padding(.bottom, 20)
 
                     TextField("Username", text: $username)
+                        .autocapitalization(.none)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .autocorrectionDisabled(true)
+                        .keyboardType(.default)
                         .padding()
 
                     SecureField("Password", text: $password)
@@ -67,7 +70,7 @@ struct LoginView: View {
         }
     }
     
-    // ✅ Store user_id in `UserDefaults` after login
+    // Store user_id in `UserDefaults` after login
     func loginUser() {
         guard let url = URL(string: "\(BASE_URL)/login") else {
             errorMessage = "Invalid server URL"
@@ -104,10 +107,15 @@ struct LoginView: View {
                 if let jsonResponse = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     DispatchQueue.main.async {
                         if let userID = jsonResponse["user_id"] as? Int {
-                            UserDefaults.standard.set(userID, forKey: "user_id")  // ✅ Store user ID
+                            UserDefaults.standard.set(userID, forKey: "user_id")
                             isAuthenticated = true
+                        } else if let errorMessage = jsonResponse["error"] as? String {
+                            // ✅ Handle "Invalid credentials" error properly
+                            self.errorMessage = errorMessage
+                            print("❌ Login failed: \(errorMessage)")
                         } else {
                             self.errorMessage = "Unexpected response format"
+                            print("⚠️ Unexpected JSON structure: \(jsonResponse)")
                         }
                     }
                 }

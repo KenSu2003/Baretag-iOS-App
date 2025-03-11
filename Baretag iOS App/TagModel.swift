@@ -8,7 +8,7 @@
 import Foundation
 import CoreGraphics
 
-// ✅ Model for individual tag locations
+// Model for individual tag locations
 struct TagLocation: Codable, Equatable {
     let id: String?
     let name: String
@@ -34,12 +34,12 @@ struct TagLocation: Codable, Equatable {
 
 }
 
-// ✅ Helper struct to decode API response for multiple tag locations
+// Helper struct to decode API response for multiple tag locations
 struct TagResponse: Codable {
     let tags_location: [TagLocation]
 }
 
-// ✅ Debugging function to print API response before decoding
+// Debugging function to print API response before decoding
 func decodeTagResponse(from data: Data) {
     do {
         let responseString = String(data: data, encoding: .utf8)
@@ -56,7 +56,7 @@ func decodeTagResponse(from data: Data) {
 }
 
 
-// ✅ Function to copy `tagData.json` to Documents directory (if not present)
+// Function to copy `tagData.json` to Documents directory (if not present)
 func copyJSONToDocuments() -> URL? {
     let fileManager = FileManager.default
     let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -84,7 +84,7 @@ func copyJSONToDocuments() -> URL? {
 }
 
 
-// ✅ Function to load JSON from `/Users/kensu/Documents/tagData.json`
+// Function to load JSON from `/Users/kensu/Documents/tagData.json`
 func loadTagData() -> TagLocation? {
     let customPath = "/Users/kensu/Documents/tagData.json"
     let url = URL(fileURLWithPath: customPath)
