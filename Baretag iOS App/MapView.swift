@@ -23,10 +23,16 @@ struct MapView: View {
    
     
     // Centering Button Variables
-    @State private var centerCoordinateRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),  // Initial location
+//    @State private var centerCoordinateWrapper.region = MKCoordinateRegion(
+//        center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),  // Initial location
+//        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+//    )
+    
+    @State private var centerCoordinateWrapper = EquatableCoordinateRegion(region: MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-    )
+    ))
+
     @State private var isMapLocked = false  // Start unlocked by default
     @State private var recenterTriggered = false  // Tracks if map movement is caused by recentering
     @State private var recenterTarget: CLLocationCoordinate2D?  // Store the target center when re-centering programmatically
@@ -39,14 +45,20 @@ struct MapView: View {
     @State private var anchorName = ""
     @State private var anchorLatitude = 0.0
     @State private var anchorLongitude = 0.0
+    
+    @State private var mapType: MKMapType = .satellite  // ✅ Default to Satellite view
+    @StateObject private var mapData = MapViewModel()  // ✅ Track zoom changes
+    @State private var isGridVisible = false  // ✅ Toggle grid ON/OFF
 
+    
     // Timer Variables
     private var updateTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
+    
         VStack {
             ZStack {
-                Map(coordinateRegion: $centerCoordinateRegion, annotationItems: mapAnnotations) { item in
+                Map(coordinateRegion: $centerCoordinateWrapper.region, annotationItems: mapAnnotations){ item in
                     MapAnnotation(coordinate: item.coordinate) {
                         if item.type == .user {
                             Circle()
@@ -76,27 +88,53 @@ struct MapView: View {
                     tagDataWatcher.startUpdating()
                     anchorDataWatcher.startUpdating()
                 }
-                .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateRegion.center)) { newCenterWrapper in
-                                    detectMapMovement(newCenterWrapper.coordinate)
-                                }
+                .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)) { newCenterWrapper in
+                    detectMapMovement(newCenterWrapper.coordinate)
+                }
+                .onChange(of: centerCoordinateWrapper) { newRegion in
+                    mapData.region = newRegion.region // ✅ Correctly track region changes
+                }
 
+                GridOverlay(isGridVisible: $isGridVisible, mapRegion: mapData.region)
+
+
+
+                
                 VStack {
-                    Spacer()
-                    
+                    Spacer() // Push everything down
+
+                    // Center Button (bottom-right)
                     HStack {
                         Spacer()
-                        Button(action: { withAnimation{toggleMapLock()} }) {
-                            Image(systemName: isMapLocked ? "location.north.fill" : "scope")
-                                .font(.title2)
-                                .padding()
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
+                        VStack {
+                            // Grid Toggle Button - ABOVE Center Button
+                            Button(action: { isGridVisible.toggle() }) {
+                                Image(systemName: isGridVisible ? "checkmark.square.fill" : "square")
+                                    .font(.title)
+                                    .foregroundColor(.blue)
+                                    .padding()
+                            }
+                            .background(Color.white.opacity(0.7))
+                            .clipShape(Circle())
+                            .padding(.bottom, 10)  // Moves it above the center button
+
+                            // Center Button (BLUE)
+                            Button(action: { withAnimation { toggleMapLock() } }) {
+                                Image(systemName: isMapLocked ? "location.north.fill" : "scope")
+                                    .font(.title2)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                            .id(isMapLocked)
                         }
-                        .id(isMapLocked)
-                        .padding()
+                        .padding(.trailing, 15) // Keep aligned to the right
+                        .padding(.bottom, 15)
                     }
                 }
+
+
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             
@@ -130,7 +168,7 @@ struct MapView: View {
             if anchorDataWatcher.anchors.isEmpty {
                 tagDataWatcher.startUpdating()
             }
-            previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: centerCoordinateRegion.center)  // Initialize last coordinate
+            previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)  // Initialize last coordinate
 
         }
 
@@ -157,8 +195,8 @@ struct MapView: View {
         if isMapLocked {
 //            print("🔒 Map locked: Re-centering on user location.")
 //            if let userLocation = userLocationManager.userLocation?.coordinate {
-//                centerCoordinateRegion.center = userLocation
-//                centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
+//                centerCoordinateWrapper.region.center = userLocation
+//                centerCoordinateWrapper.region.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
 //            }
             print("🔒 Map locked: Re-centering on user location.")
             recenterTriggered = true  // Set flag to indicate programmatic recentering
@@ -202,8 +240,8 @@ struct MapView: View {
 
     private func updateCenterCoordinateBasedOnLock() {
         if let userLocation = userLocationManager.userLocation {
-            centerCoordinateRegion.center = userLocation.coordinate
-            centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
+            centerCoordinateWrapper.region.center = userLocation.coordinate
+            centerCoordinateWrapper.region.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
         }
     }
 
@@ -211,8 +249,8 @@ struct MapView: View {
     private func zoomToTag(tag: BareTag) {
         print("🔓 Unlocking map and zooming to tag: \(tag.name)")
         isMapLocked = false
-        centerCoordinateRegion.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
-        centerCoordinateRegion.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
+        centerCoordinateWrapper.region.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
+        centerCoordinateWrapper.region.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
     }
 
     private var mapAnnotations: [MapAnnotationItem] {
@@ -368,4 +406,15 @@ struct MapAnnotationItem: Identifiable {
     let type: AnnotationType
     let coordinate: CLLocationCoordinate2D
     let name: String?
+}
+
+struct EquatableCoordinateRegion: Equatable {
+    var region: MKCoordinateRegion
+
+    static func == (lhs: EquatableCoordinateRegion, rhs: EquatableCoordinateRegion) -> Bool {
+        return lhs.region.center.latitude == rhs.region.center.latitude &&
+               lhs.region.center.longitude == rhs.region.center.longitude &&
+               lhs.region.span.latitudeDelta == rhs.region.span.latitudeDelta &&
+               lhs.region.span.longitudeDelta == rhs.region.span.longitudeDelta
+    }
 }
