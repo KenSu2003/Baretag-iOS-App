@@ -88,15 +88,16 @@ struct MapView: View {
                     tagDataWatcher.startUpdating()
                     anchorDataWatcher.startUpdating()
                 }
-                .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)) { newCenterWrapper in
-                    detectMapMovement(newCenterWrapper.coordinate)
+                .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)) { newCenterWrapper in detectMapMovement(newCenterWrapper.coordinate)
                 }
                 .onChange(of: centerCoordinateWrapper) { newRegion in
-                    mapData.region = newRegion.region // ✅ Correctly track region changes
+                    mapData.region = newRegion.region
                 }
 
-                GridOverlay(isGridVisible: $isGridVisible, mapRegion: mapData.region)
-
+//                GridOverlay(isGridVisible: $isGridVisible, mapRegion: mapData.region)
+                if isGridVisible {
+                    GridOverlay(isGridVisible: $isGridVisible, mapRegion: mapData.region)
+                }
 
 
                 
