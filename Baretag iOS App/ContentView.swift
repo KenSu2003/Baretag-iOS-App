@@ -12,46 +12,38 @@ import SwiftUI
 var BASE_URL = "http://172.24.131.25:5000"
 
 struct ContentView: View {
-    @State private var isAuthenticated = false
+    @AppStorage("isAuthenticated") private var isAuthenticated = false  // ✅ Persistent login state
 
     var body: some View {
         if isAuthenticated {
-            MainTabView()
+            MainTabView(isAuthenticated: $isAuthenticated)  // ✅ Pass binding
         } else {
-            LoginView(isAuthenticated: $isAuthenticated)
+            LoginView(isAuthenticated: $isAuthenticated)  // ✅ Pass binding
         }
     }
 }
 
 struct MainTabView: View {
+    @Binding var isAuthenticated: Bool  // ✅ Receive binding from ContentView
+
     var body: some View {
         TabView {
-            
-            // Add Anchor
             AnchorLocatorView()
                 .tabItem {
                     Label("Localizer", systemImage: "signpost.right.and.left.circle.fill")
                 }
-            // Add Tag
             TagLocatorView()
                 .tabItem {
                     Label("Tag Locator", systemImage: "tag")
                 }
-                
-            // Map
             MapView()
                 .tabItem {
                     Label("Map", systemImage: "map")
                 }
-            
-//            LocationView()
-//                .tabItem {
-//                    Label("UWB", systemImage: "airtag")
-//                }
+            AccountView(isAuthenticated: $isAuthenticated)  // ✅ Pass binding
+                .tabItem {
+                    Label("Account", systemImage: "person.circle")
+                }
         }
     }
 }
-
-//#Preview {
-//    ContentView()
-//}
