@@ -61,8 +61,9 @@ class AnchorLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     // CLLocation contatins at least one object representing the current location (Data Structure: QUEUE)
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }     // gets the most recent location
-        latitude = location.coordinate.latitude
-        longitude = location.coordinate.longitude
+        latitude = location.coordinate.latitude.rounded(toPlaces: 5)
+        longitude = location.coordinate.longitude.rounded(toPlaces: 5)
+
         locationManager.stopUpdatingLocation()                  // Stops running locations updates to save phone's battery
         
         if canUpdateStatus { status = "Location fetched. Sending data over Bluetooth..." }
@@ -161,4 +162,11 @@ class AnchorLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
 
 
     
+}
+
+extension Double {
+    func rounded(toPlaces places: Int) -> Double {
+        let divisor = pow(10.0, Double(places))
+        return (self * divisor).rounded() / divisor
+    }
 }
