@@ -15,9 +15,22 @@
 
 ## 📱 Screenshots  
 
-**Anchor Locator**\n
+**Anchor Locator**
 
 <img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.19.51.png" width="200" height="400">
+
+**Tag Locator**
+
+<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.19.56.png" width="200" height="400">
+
+**Map**
+
+<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.20.00.png" width="200" height="400">
+
+**Dynamic Grid Overlay**
+
+<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.20.09.png" width="200" height="400">
+
 
 *To be uploaded*
 
