@@ -16,6 +16,7 @@
 ## 📱 Screenshots  
 
 **Anchor Locator**
+
 <img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.19.51.png" width="200" height="400">
 
 *To be uploaded*
