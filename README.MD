@@ -1,7 +1,7 @@
 
 # BareTag iOS App  
 
-![BareTag Logo](https://your-logo-url.com)
+![BareTag Logo](https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Baretag%20iOS%20App/Assets.xcassets/AppIcon.appiconset/Screenshot%202024-12-01%20155244.png)
 
 **BareTag** is an iOS application designed to work with the BareTag tracking system. It helps users keep track of their valuable items using Bluetooth technology.  
 
