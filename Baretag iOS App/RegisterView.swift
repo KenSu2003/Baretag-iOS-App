@@ -27,14 +27,21 @@ struct RegisterView: View {
             TextField("Username", text: $username)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
 
             SecureField("Password", text: $password)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
             
             SecureField("Confirm Password", text: $confirmPassword)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+
             
             if let errorMessage = errorMessage {
                 Text(errorMessage)

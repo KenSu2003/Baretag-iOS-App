@@ -329,6 +329,13 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Need to enable for communciating with server.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSLocationTemporaryUsageDescriptionDictionary = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSNearbyInteractionAllowOnceUsageDescription = "";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "Need to enable to send anchor location to the server.";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -388,6 +395,13 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Need to enable for communciating with server.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSLocationTemporaryUsageDescriptionDictionary = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Need to enable to send anchor location to the server.";
+				INFOPLIST_KEY_NSNearbyInteractionAllowOnceUsageDescription = "";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "Need to enable to send anchor location to the server.";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;

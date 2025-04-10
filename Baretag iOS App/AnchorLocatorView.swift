@@ -26,12 +26,15 @@ struct AnchorLocatorView: View {
             TextField("Enter Anchor Name", text: $anchorName)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
-
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
             
             // Does not check whether the Anchor ID has already been used.
-            TextField("Enter Anchor ID", text: $anchorID)
+            TextField("Enter Anchor ID, Numbers Only", text: $anchorID)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
 
             // Fixed Numeric Input Fields (X, Y Coordinates)
 //            TextField("Enter x Coordinate", text: Binding(
@@ -54,7 +57,7 @@ struct AnchorLocatorView: View {
             Button(action: {
                 anchorLocationManager.fetchLocationAndSend(name: anchorName, id: anchorID)
             }) {
-                Text("Fetch Location & Send via BLE")
+                Text("Fetch Location & Send to Server")
                     .font(.system(size: 18, weight: .semibold))
                     .padding()
                     .frame(maxWidth: .infinity) // Center Button

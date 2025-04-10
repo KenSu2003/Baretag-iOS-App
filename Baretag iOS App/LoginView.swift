@@ -32,10 +32,14 @@ struct LoginView: View {
                         .autocorrectionDisabled(true)
                         .keyboardType(.default)
                         .padding()
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
 
                     SecureField("Password", text: $password)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
 
                     if let errorMessage = errorMessage {
                         Text(errorMessage)
