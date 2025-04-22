@@ -19,25 +19,21 @@ struct MapView: View {
     @StateObject private var tagDataWatcher = TagDataWatcher(useLocalFile: false)
     @StateObject private var anchorDataWatcher = AnchorDataWatcher(useLocalFile: false)
     @StateObject private var userLocationManager = UserLocationManager()  // Real-time GPS location
-
-   
-    
-    // Centering Button Variables
-//    @State private var centerCoordinateWrapper.region = MKCoordinateRegion(
-//        center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),  // Initial location
-//        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-//    )
-    
     @State private var centerCoordinateWrapper = EquatableCoordinateRegion(region: MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     ))
 
+    // Map Centering Variables
     @State private var isMapLocked = false  // Start unlocked by default
     @State private var recenterTriggered = false  // Tracks if map movement is caused by recentering
     @State private var recenterTarget: CLLocationCoordinate2D?  // Store the target center when re-centering programmatically
     @State private var previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291))
     private let recenterTolerance: Double = 10.0
+    
+    // Tag Variable
+    @State private var selectedTag: BareTag?
+    @State private var showTagInfo = false
     
     // Anchor Variables
     @State private var selectedAnchor: MapAnnotationItem?
@@ -68,6 +64,10 @@ struct MapView: View {
                             Image(systemName: "mappin.circle.fill")
                                 .foregroundColor(.red)
                                 .font(.title)
+                                .onTapGesture {
+                                    selectedTag = tagDataWatcher.tagLocations.first(where: { $0.coordinate.latitude == item.coordinate.latitude && $0.coordinate.longitude == item.coordinate.longitude })
+                                    showTagInfo = true
+                                }
                         } else if item.type == .anchor {
                             Image(systemName: "flag.fill")
                                 .foregroundColor(.green)
@@ -94,7 +94,6 @@ struct MapView: View {
                     mapData.region = newRegion.region
                 }
 
-//                GridOverlay(isGridVisible: $isGridVisible, mapRegion: mapData.region)
                 if isGridVisible {
                     GridOverlay(isGridVisible: $isGridVisible, mapRegion: mapData.region)
                 }
@@ -182,6 +181,12 @@ struct MapView: View {
             Button("Delete", role: .destructive) { deleteAnchor() }
             Button("Cancel", role: .cancel) {}
         }
+        
+        .alert("Tag Location Info", isPresented: $showTagInfo, presenting: selectedTag) { tag in
+            Button("OK", role: .cancel) { }
+        } message: { tag in
+            Text("Name: \(tag.name)\nLatitude: \(tag.latitude)\nLongitude: \(tag.longitude)\nAltitude: \(tag.altitude ?? 0.0) m")
+        }
     }
 
     private func toggleMapLock() {
@@ -194,11 +199,6 @@ struct MapView: View {
             }
         
         if isMapLocked {
-//            print("🔒 Map locked: Re-centering on user location.")
-//            if let userLocation = userLocationManager.userLocation?.coordinate {
-//                centerCoordinateWrapper.region.center = userLocation
-//                centerCoordinateWrapper.region.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
-//            }
             print("🔒 Map locked: Re-centering on user location.")
             recenterTriggered = true  // Set flag to indicate programmatic recentering
             recenterTarget = userLocationManager.userLocation?.coordinate  // Store the target location
@@ -257,17 +257,30 @@ struct MapView: View {
     private var mapAnnotations: [MapAnnotationItem] {
         var annotations: [MapAnnotationItem] = []
 
-        // ✅ Fix: Provide a default name for the user location
         if let userLocation = userLocationManager.userLocation {
-            annotations.append(MapAnnotationItem(type: .user, coordinate: userLocation.coordinate, name: "User"))
+            annotations.append(MapAnnotationItem(
+                id: "user",
+                type: .user,
+                coordinate: userLocation.coordinate,
+                name: "User"))
         }
 
         for tag in tagDataWatcher.tagLocations {
-            annotations.append(MapAnnotationItem(type: .tag, coordinate: tag.coordinate, name: tag.name))
+            annotations.append(MapAnnotationItem(
+                id: tag.id,
+                type: .tag,
+                coordinate: tag.coordinate,
+                name: tag.name)
+            )
         }
 
         for anchor in anchorDataWatcher.anchors {
-            annotations.append(MapAnnotationItem(type: .anchor, coordinate: CLLocationCoordinate2D(latitude: anchor.latitude, longitude: anchor.longitude), name: anchor.name))
+            annotations.append(MapAnnotationItem(
+                id: anchor.id,
+                type: .anchor,
+                coordinate: CLLocationCoordinate2D(latitude: anchor.latitude, longitude: anchor.longitude),
+                name: anchor.name)
+            )
         }
 
         return annotations
@@ -290,7 +303,6 @@ struct MapView: View {
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // ✅ Ensure session cookies are sent
         let session = URLSession.shared
         let task = session.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -390,6 +402,8 @@ struct BareTag: Identifiable, Codable, Equatable {
     let name: String
     let latitude: Double
     let longitude: Double
+    let altitude: Double?
+    let status: Bool?
 
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
@@ -403,7 +417,7 @@ enum AnnotationType {
 
 // Annotation model for user and tag locations
 struct MapAnnotationItem: Identifiable {
-    let id = UUID()
+    let id: String
     let type: AnnotationType
     let coordinate: CLLocationCoordinate2D
     let name: String?

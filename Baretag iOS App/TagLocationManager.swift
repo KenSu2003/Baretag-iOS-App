@@ -14,6 +14,7 @@ class TagLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate 
 
     @Published var latitude: Double?
     @Published var longitude: Double?
+    @Published var altitude: Double?
     @Published var geo_location: String?
 
     override init() {

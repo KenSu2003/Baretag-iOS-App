@@ -14,12 +14,14 @@ struct TagLocation: Codable, Equatable {
     let name: String
     let latitude: Double
     let longitude: Double
+    let altitude: Double?
+    let status: Bool?
     let timestamp: String?
    
 
     // Define JSON keys explicitly
     enum CodingKeys: String, CodingKey {
-        case id, name, latitude, longitude, timestamp
+        case id, name, latitude, longitude, altitude, status, timestamp
     }
 
     // Provide default values for if any of the keys are missing in the API response
@@ -29,6 +31,8 @@ struct TagLocation: Codable, Equatable {
         name = try container.decode(String.self, forKey: .name)
         latitude = try container.decode(Double.self, forKey: .latitude)
         longitude = try container.decode(Double.self, forKey: .longitude)
+        altitude = try container.decode(Double.self, forKey: .altitude)
+        status = try container.decode(Bool.self, forKey: .status)
         timestamp = try container.decodeIfPresent(String.self, forKey: .timestamp)  // ✅ Also safely handles missing timestamp
     }
 
