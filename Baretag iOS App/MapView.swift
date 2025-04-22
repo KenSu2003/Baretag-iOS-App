@@ -140,11 +140,30 @@ struct MapView: View {
                             }
                             path.closeSubpath()
                         }
-                        .stroke(Color.blue, lineWidth: 2)
-                        .background(Color.blue.opacity(0.15))
+                        .stroke(Color.green, lineWidth: 2)
+                        .background(Color.green.opacity(0.15))
                     }
                     .allowsHitTesting(false)  // 👈 THIS LINE UNLOCKS MAP INTERACTIONS
                 }
+                
+                if let start = dragStartPoint, let end = dragEndPoint {
+                    GeometryReader { geo in
+                        let rect = CGRect(
+                            x: min(start.x, end.x),
+                            y: min(start.y, end.y),
+                            width: abs(start.x - end.x),
+                            height: abs(start.y - end.y)
+                        )
+
+                        Path { path in
+                            path.addRect(rect)
+                        }
+                        .stroke(Color.blue, lineWidth: 2)
+                        .background(Color.blue.opacity(0.2))
+                    }
+                    .allowsHitTesting(false)
+                }
+
 
 
 
@@ -486,8 +505,10 @@ struct MapView: View {
                 print("❌ Error saving boundary: \(error)")
                 return
             }
-
             print("📦 Boundary submitted.")
+            DispatchQueue.main.async {
+                fetchSavedBoundary() // ✅ Pull the updated boundary to re-render on screen
+            }
         }.resume()
     }
     
@@ -594,5 +615,4 @@ struct EquatableCoordinateRegion: Equatable {
                lhs.region.span.longitudeDelta == rhs.region.span.longitudeDelta
     }
 }
-
 
