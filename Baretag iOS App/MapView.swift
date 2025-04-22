@@ -128,13 +128,24 @@ struct MapView: View {
                 }
 
                 // ✅ Rectangle visual feedback
-                if let start = dragStartPoint, let end = dragEndPoint {
-                    Rectangle()
+                if boundaryCoordinates.count >= 3 {
+                    GeometryReader { geo in
+                        Path { path in
+                            guard let first = boundaryCoordinates.first else { return }
+
+                            let screenPoints = boundaryCoordinates.map { convertCoordinateToPoint($0) }
+                            path.move(to: screenPoints.first!)
+                            for pt in screenPoints.dropFirst() {
+                                path.addLine(to: pt)
+                            }
+                            path.closeSubpath()
+                        }
                         .stroke(Color.blue, lineWidth: 2)
-                        .background(Color.blue.opacity(0.2))
-                        .frame(width: abs(end.x - start.x), height: abs(end.y - start.y))
-                        .position(x: (start.x + end.x)/2, y: (start.y + end.y)/2)
+                        .background(Color.blue.opacity(0.15))
+                    }
+                    .allowsHitTesting(false)  // 👈 THIS LINE UNLOCKS MAP INTERACTIONS
                 }
+
 
 
                 if isGridVisible {
@@ -227,6 +238,7 @@ struct MapView: View {
                 tagDataWatcher.startUpdating()
             }
             previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)  // Initialize last coordinate
+            fetchSavedBoundary()
 
         }
 
@@ -478,6 +490,60 @@ struct MapView: View {
             print("📦 Boundary submitted.")
         }.resume()
     }
+    
+    func fetchSavedBoundary() {
+        guard let url = URL(string: "\(BASE_URL)/get_boundaries") else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("❌ Error fetching boundary: \(error)")
+                return
+            }
+
+            guard let data = data else { return }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let points = json["points"] as? [[String: Double]] {
+                    let coords: [CLLocationCoordinate2D] = points.compactMap { point in
+                        guard let lat = point["lat"], let lon = point["lon"] else { return nil }
+                        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                    }
+
+
+                    DispatchQueue.main.async {
+                        self.boundaryCoordinates = coords
+                    }
+                }
+            } catch {
+                print("❌ Failed to parse boundary response: \(error)")
+            }
+        }.resume()
+    }
+    
+    
+    func convertCoordinateToPoint(_ coordinate: CLLocationCoordinate2D) -> CGPoint {
+        let region = centerCoordinateWrapper.region
+        let mapWidth: CGFloat = UIScreen.main.bounds.width
+        let mapHeight: CGFloat = UIScreen.main.bounds.height
+
+        let latDelta = region.span.latitudeDelta
+        let lonDelta = region.span.longitudeDelta
+
+        let latOffset = region.center.latitude - coordinate.latitude
+        let lonOffset = coordinate.longitude - region.center.longitude
+
+        let x = (mapWidth / 2) + (lonOffset / lonDelta) * mapWidth
+        let y = (mapHeight / 2) + (latOffset / latDelta) * mapHeight
+
+        return CGPoint(x: x, y: y)
+    }
+
+
 
 
 }
