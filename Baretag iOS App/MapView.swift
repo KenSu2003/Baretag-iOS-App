@@ -48,8 +48,13 @@ struct MapView: View {
     
     
     // Setting Boundaries
-    @State private var isSettingBoundary = false
     @State private var boundaryCorners: [CLLocationCoordinate2D] = []
+    @State private var isDrawingBoundary = false
+    @State private var dragStartPoint: CGPoint?
+    @State private var dragEndPoint: CGPoint?
+    @State private var boundaryCoordinates: [CLLocationCoordinate2D] = []
+
+
 
     
     // Timer Variables
@@ -98,21 +103,38 @@ struct MapView: View {
                 .onChange(of: centerCoordinateWrapper) { newRegion in
                     mapData.region = newRegion.region
                 }
-                .gesture(
-                    TapGesture()
-                        .onEnded {
-                            if isSettingBoundary, boundaryCorners.count < 2 {
-                                let coord = centerCoordinateWrapper.region.center
-                                boundaryCorners.append(coord)
-                                print("🟩 Selected Corner \(boundaryCorners.count): \(coord)")
+                
+                // ✅ FULLSCREEN overlay to capture drag gestures
+                if isDrawingBoundary {
+                    GeometryReader { geo in
+                        Color.clear
+                            .contentShape(Rectangle()) // Important for gesture hit-testing
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { value in
+                                        dragStartPoint = value.startLocation
+                                        dragEndPoint = value.location
+                                    }
+                                    .onEnded { _ in
+                                        if let start = dragStartPoint, let end = dragEndPoint {
+                                            submitBoundaryFromDrag(start: start, end: end)
+                                        }
+                                        dragStartPoint = nil
+                                        dragEndPoint = nil
+                                        isDrawingBoundary = false
+                                    }
+                            )
+                    }
+                }
 
-                                if boundaryCorners.count == 2 {
-                                    isSettingBoundary = false
-                                    submitBoundary(corners: boundaryCorners)
-                                }
-                            }
-                        }
-                )
+                // ✅ Rectangle visual feedback
+                if let start = dragStartPoint, let end = dragEndPoint {
+                    Rectangle()
+                        .stroke(Color.blue, lineWidth: 2)
+                        .background(Color.blue.opacity(0.2))
+                        .frame(width: abs(end.x - start.x), height: abs(end.y - start.y))
+                        .position(x: (start.x + end.x)/2, y: (start.y + end.y)/2)
+                }
 
 
                 if isGridVisible {
@@ -152,15 +174,17 @@ struct MapView: View {
                             
                             // Setting Boundaries (Green)
                             Button(action: {
-                                isSettingBoundary.toggle()
-                                boundaryCorners.removeAll()
+                                isDrawingBoundary.toggle()
+                                dragStartPoint = nil
+                                dragEndPoint = nil
                             }) {
-                                Text(isSettingBoundary ? "Cancel" : "Set Bounds")
+                                Text(isDrawingBoundary ? "Cancel Drawing" : "Draw Boundary")
                                     .padding()
-                                    .background(isSettingBoundary ? Color.red : Color.green)
+                                    .background(isDrawingBoundary ? Color.red : Color.green)
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
                             }
+
                             
                         }
                         .padding(.trailing, 15) // Keep aligned to the right
@@ -418,6 +442,43 @@ struct MapView: View {
             }
         }.resume()
     }
+    
+    
+    func submitBoundaryFromDrag(start: CGPoint, end: CGPoint) {
+        let screenPoints = [
+            CGPoint(x: min(start.x, end.x), y: min(start.y, end.y)), // top-left
+            CGPoint(x: max(start.x, end.x), y: min(start.y, end.y)), // top-right
+            CGPoint(x: max(start.x, end.x), y: max(start.y, end.y)), // bottom-right
+            CGPoint(x: min(start.x, end.x), y: max(start.y, end.y))  // bottom-left
+        ]
+
+        let mapView = MKMapView(frame: UIScreen.main.bounds)
+        mapView.setRegion(centerCoordinateWrapper.region, animated: false)
+
+        let boundaryCoords = screenPoints.map { point in
+            mapView.convert(point, toCoordinateFrom: mapView)
+        }
+
+        let points = boundaryCoords.map { ["lat": $0.latitude, "lon": $0.longitude] }
+
+        let body: [String: Any] = ["points": points]
+        print(body)
+        guard let url = URL(string: "\(BASE_URL)/save_boundary") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("❌ Error saving boundary: \(error)")
+                return
+            }
+
+            print("📦 Boundary submitted.")
+        }.resume()
+    }
+
 
 }
 
@@ -469,47 +530,3 @@ struct EquatableCoordinateRegion: Equatable {
 }
 
 
-func submitBoundary(corners: [CLLocationCoordinate2D]) {
-    guard corners.count == 2 else { return }
-
-    let topLeft = CLLocationCoordinate2D(
-        latitude: max(corners[0].latitude, corners[1].latitude),
-        longitude: min(corners[0].longitude, corners[1].longitude)
-    )
-
-    let topRight = CLLocationCoordinate2D(
-        latitude: topLeft.latitude,
-        longitude: max(corners[0].longitude, corners[1].longitude)
-    )
-
-    let bottomLeft = CLLocationCoordinate2D(
-        latitude: min(corners[0].latitude, corners[1].latitude),
-        longitude: topLeft.longitude
-    )
-
-    let bottomRight = CLLocationCoordinate2D(
-        latitude: bottomLeft.latitude,
-        longitude: topRight.longitude
-    )
-
-    let points = [topLeft, topRight, bottomRight, bottomLeft]
-
-    let body: [String: Any] = [
-        "points": points.map { ["lat": $0.latitude, "lon": $0.longitude] }
-    ]
-
-    guard let url = URL(string: "\(BASE_URL)/save_boundary") else { return }
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-    URLSession.shared.dataTask(with: request) { data, response, error in
-        if let error = error {
-            print("❌ Error saving boundary: \(error)")
-            return
-        }
-
-        print("📦 Boundary submitted.")
-    }.resume()
-}
