@@ -1,18 +1,13 @@
-//
-//  MapViewRepresentable.swift
-//  Baretag iOS App
-//
-//  Created by Ken Su on 1/22/25.
-//
-
 import SwiftUI
 import MapKit
 
 struct MapViewRepresentable: UIViewRepresentable {
-    @Binding var centerCoordinate: CLLocationCoordinate2D
+    @Binding var centerRegion: MKCoordinateRegion
     @Binding var isLocked: Bool
     @Binding var polygonCoords: [CLLocationCoordinate2D]
-
+    var annotations: [MapAnnotationItem]
+    var onTagTapped: (BareTag) -> Void
+    var onAnchorLongPressed: (MapAnnotationItem) -> Void
 
     class Coordinator: NSObject, MKMapViewDelegate {
         var parent: MapViewRepresentable
@@ -21,13 +16,60 @@ struct MapViewRepresentable: UIViewRepresentable {
             self.parent = parent
         }
 
-        // Track user interaction
         func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
             if !parent.isLocked {
                 print("User moved the map. Lock disabled.")
             }
         }
-        
+
+        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            guard let customAnnotation = annotation as? CustomAnnotation else { return nil }
+
+            let identifier = "Marker"
+            var view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
+
+            if view == nil {
+                view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                view?.canShowCallout = false
+            } else {
+                view?.annotation = annotation
+            }
+
+            switch customAnnotation.type {
+            case .user:
+                view?.glyphImage = UIImage(systemName: "circle.fill")
+                view?.markerTintColor = .blue
+
+            case .tag:
+                view?.glyphImage = UIImage(systemName: "mappin.circle.fill")
+                view?.markerTintColor = .red
+
+            case .anchor:
+                view?.glyphImage = UIImage(systemName: "flag.fill")
+                view?.markerTintColor = .green
+            }
+
+            return view
+        }
+
+
+
+        func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+            guard let annotation = view.annotation as? CustomAnnotation else { return }
+
+            switch annotation.type {
+            case .tag:
+                if let tag = annotation.bareTag {
+                    parent.onTagTapped(tag)
+                }
+            case .anchor:
+                if let item = annotation.item {
+                    parent.onAnchorLongPressed(item)
+                }
+            default: break
+            }
+        }
+
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let polygon = overlay as? MKPolygon {
                 let renderer = MKPolygonRenderer(polygon: polygon)
@@ -38,6 +80,20 @@ struct MapViewRepresentable: UIViewRepresentable {
             }
 
             return MKOverlayRenderer()
+        }
+
+        // MARK: 🔧 Render symbol as fully colored image
+        private func renderSymbol(systemName: String, color: UIColor, pointSize: CGFloat) -> UIImage? {
+            let config = UIImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+            guard let symbolImage = UIImage(systemName: systemName)?.applyingSymbolConfiguration(config) else {
+                return nil
+            }
+
+            let renderer = UIGraphicsImageRenderer(size: symbolImage.size)
+            return renderer.image { _ in
+                color.set()
+                symbolImage.draw(at: .zero)
+            }
         }
     }
 
@@ -52,58 +108,64 @@ struct MapViewRepresentable: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: MKMapView, context: Context) {
-        // Recenter the map only when locked
         if isLocked {
-            let zoomRegion = MKCoordinateRegion(
-                center: centerCoordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // Adjust zoom level
-            )
-            uiView.setRegion(zoomRegion, animated: true)
+            uiView.setRegion(centerRegion, animated: true)
         }
 
-        // Always ensure the annotation stays at the tag location
-        uiView.removeAnnotations(uiView.annotations) // Remove old annotations
-        let annotation = MKPointAnnotation()
-        annotation.coordinate = centerCoordinate
-        annotation.title = "Tag Location"
-        uiView.addAnnotation(annotation)
-        
-        let existingPolygons = uiView.overlays.compactMap { $0 as? MKPolygon }
+        uiView.removeAnnotations(uiView.annotations)
 
+        for annotation in annotations {
+            let custom = CustomAnnotation(annotationItem: annotation)
+            if annotation.type == .tag {
+                custom.bareTag = annotation.bareTag
+            }
+            uiView.addAnnotation(custom)
+        }
+
+        let existingPolygons = uiView.overlays.compactMap { $0 as? MKPolygon }
         let currentCoordsMatch = existingPolygons.first?.coordinatesEqual(to: polygonCoords) ?? false
 
         if !currentCoordsMatch {
             uiView.removeOverlays(uiView.overlays)
             if polygonCoords.count >= 3 {
-                print("🟩 Drawing polygon with coords: \(polygonCoords)")
                 let polygon = MKPolygon(coordinates: polygonCoords, count: polygonCoords.count)
                 uiView.addOverlay(polygon)
-                // After `uiView.addOverlay(polygon)`
-                let boundingMapRect = polygon.boundingMapRect
-                uiView.setVisibleMapRect(boundingMapRect, edgePadding: UIEdgeInsets(top: 50, left: 50, bottom: 50, right: 50), animated: true)
-
-
-                // 👇 Auto-zoom to polygon region
-                var zoomRect = MKMapRect.null
-                for coordinate in polygonCoords {
-                    let point = MKMapPoint(coordinate)
-                    let rect = MKMapRect(x: point.x, y: point.y, width: 0.1, height: 0.1)
-                    zoomRect = zoomRect.union(rect)
-                }
-                uiView.setVisibleMapRect(zoomRect, edgePadding: UIEdgeInsets(top: 40, left: 40, bottom: 40, right: 40), animated: true)
             }
-
-        } else {
-            print("🔁 Skipped redraw — coords unchanged")
         }
     }
 }
 
+// MARK: - Custom Annotation Class
+class CustomAnnotation: NSObject, MKAnnotation {
+    let coordinate: CLLocationCoordinate2D
+    let type: AnnotationType
+    let item: MapAnnotationItem?
+    var bareTag: BareTag?
+
+    init(annotationItem: MapAnnotationItem) {
+        self.coordinate = annotationItem.coordinate
+        self.type = annotationItem.type
+        self.item = annotationItem
+    }
+}
+
+// MARK: - Polygon Comparison
 extension MKPolygon {
     func coordinatesEqual(to coords: [CLLocationCoordinate2D]) -> Bool {
         guard self.pointCount == coords.count else { return false }
         var polygonCoords = [CLLocationCoordinate2D](repeating: kCLLocationCoordinate2DInvalid, count: self.pointCount)
         self.getCoordinates(&polygonCoords, range: NSRange(location: 0, length: self.pointCount))
         return zip(polygonCoords, coords).allSatisfy { $0.latitude == $1.latitude && $0.longitude == $1.longitude }
+    }
+}
+
+func renderColoredSymbol(systemName: String, color: UIColor, pointSize: CGFloat) -> UIImage? {
+    let config = UIImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+    guard let baseImage = UIImage(systemName: systemName, withConfiguration: config) else { return nil }
+
+    let renderer = UIGraphicsImageRenderer(size: baseImage.size)
+    return renderer.image { context in
+        color.set()
+        baseImage.draw(at: .zero)
     }
 }

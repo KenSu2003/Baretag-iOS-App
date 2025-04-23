@@ -15,105 +15,70 @@ import Combine
 
 struct MapView: View {
 
-    // Data Watcher
     @StateObject private var tagDataWatcher = TagDataWatcher(useLocalFile: false)
     @StateObject private var anchorDataWatcher = AnchorDataWatcher(useLocalFile: false)
-    @StateObject private var userLocationManager = UserLocationManager()  // Real-time GPS location
+    @StateObject private var userLocationManager = UserLocationManager()
+
     @State private var centerCoordinateWrapper = EquatableCoordinateRegion(region: MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291),
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     ))
 
-    // Map Centering Variables
-    @State private var isMapLocked = false  // Start unlocked by default
-    @State private var recenterTriggered = false  // Tracks if map movement is caused by recentering
-    @State private var recenterTarget: CLLocationCoordinate2D?  // Store the target center when re-centering programmatically
+    @State private var isMapLocked = false
+    @State private var recenterTriggered = false
+    @State private var recenterTarget: CLLocationCoordinate2D?
     @State private var previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: CLLocationCoordinate2D(latitude: 42.3936, longitude: -72.5291))
     private let recenterTolerance: Double = 10.0
-    
-    // Tag Variable
+
     @State private var selectedTag: BareTag?
     @State private var showTagInfo = false
-    
-    // Anchor Variables
+
     @State private var selectedAnchor: MapAnnotationItem?
     @State private var showAnchorOptions = false
     @State private var anchorName = ""
     @State private var anchorLatitude = 0.0
     @State private var anchorLongitude = 0.0
-    
-    @State private var mapType: MKMapType = .satellite
-    @StateObject private var mapData = MapViewModel()
+
     @State private var isGridVisible = false
-    
-    
-    // Setting Boundaries
-    @State private var boundaryCorners: [CLLocationCoordinate2D] = []
+    @StateObject private var mapData = MapViewModel()
+
     @State private var isDrawingBoundary = false
     @State private var dragStartPoint: CGPoint?
     @State private var dragEndPoint: CGPoint?
     @State private var boundaryCoordinates: [CLLocationCoordinate2D] = []
 
-
-
-    
-    // Timer Variables
     private var updateTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
-    
         VStack {
             ZStack {
-                Map(coordinateRegion: $centerCoordinateWrapper.region, annotationItems: mapAnnotations){ item in
-                    MapAnnotation(coordinate: item.coordinate) {
-                        if item.type == .user {
-                            Circle()
-                                .fill(Color.blue)
-                                .frame(width: 10, height: 10)
-                        } else if item.type == .tag {
-                            Image(systemName: "mappin.circle.fill")
-                                .foregroundColor(.red)
-                                .font(.title)
-                                .onTapGesture {
-                                    selectedTag = tagDataWatcher.tagLocations.first(where: { $0.coordinate.latitude == item.coordinate.latitude && $0.coordinate.longitude == item.coordinate.longitude })
-                                    showTagInfo = true
-                                }
-                        } else if item.type == .anchor {
-                            Image(systemName: "flag.fill")
-                                .foregroundColor(.green)
-                                .font(.title)
-                                .onLongPressGesture {
-                                    selectedAnchor = item
-                                    anchorName = item.name ?? ""
-                                    anchorLatitude = item.coordinate.latitude
-                                    anchorLongitude = item.coordinate.longitude
-                                    showAnchorOptions = true
-                                }
-                        }
+                MapViewRepresentable(
+                    centerRegion: $centerCoordinateWrapper.region,
+                    isLocked: $isMapLocked,
+                    polygonCoords: $boundaryCoordinates,
+                    annotations: mapAnnotations,
+                    onTagTapped: { tag in
+                        selectedTag = tag
+                        showTagInfo = true
+                    },
+                    onAnchorLongPressed: { anchor in
+                        selectedAnchor = anchor
+                        anchorName = anchor.name ?? ""
+                        anchorLatitude = anchor.coordinate.latitude
+                        anchorLongitude = anchor.coordinate.longitude
+                        showAnchorOptions = true
                     }
-                }
-                .edgesIgnoringSafeArea(.top)
-                .onReceive(updateTimer) { _ in
-                    print("🔄 Timer-based update triggered.")
-                    tagDataWatcher.startUpdating()
-                    anchorDataWatcher.startUpdating()
-                }
-                .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)) { newCenterWrapper in detectMapMovement(newCenterWrapper.coordinate)
-                }
-                .onChange(of: centerCoordinateWrapper) { newRegion in
-                    mapData.region = newRegion.region
-                }
-                
-                // ✅ FULLSCREEN overlay to capture drag gestures
+                )
+
                 if isDrawingBoundary {
-                    GeometryReader { geo in
+                    GeometryReader { _ in
                         Color.clear
-                            .contentShape(Rectangle()) // Important for gesture hit-testing
+                            .contentShape(Rectangle())
                             .gesture(
                                 DragGesture()
-                                    .onChanged { value in
-                                        dragStartPoint = value.startLocation
-                                        dragEndPoint = value.location
+                                    .onChanged {
+                                        dragStartPoint = $0.startLocation
+                                        dragEndPoint = $0.location
                                     }
                                     .onEnded { _ in
                                         if let start = dragStartPoint, let end = dragEndPoint {
@@ -123,109 +88,35 @@ struct MapView: View {
                                         dragEndPoint = nil
                                         isDrawingBoundary = false
                                     }
+
                             )
                     }
                 }
 
-                // ✅ Rectangle visual feedback
-                if boundaryCoordinates.count >= 3 {
-                    GeometryReader { geo in
-                        Path { path in
-                            guard let first = boundaryCoordinates.first else { return }
-
-                            let screenPoints = boundaryCoordinates.map { convertCoordinateToPoint($0) }
-                            path.move(to: screenPoints.first!)
-                            for pt in screenPoints.dropFirst() {
-                                path.addLine(to: pt)
-                            }
-                            path.closeSubpath()
-                        }
-                        .stroke(Color.green, lineWidth: 2)
-                        .background(Color.green.opacity(0.15))
-                    }
-                    .allowsHitTesting(false)  // 👈 THIS LINE UNLOCKS MAP INTERACTIONS
-                }
                 
+
                 if let start = dragStartPoint, let end = dragEndPoint {
-                    GeometryReader { geo in
+                    GeometryReader { _ in
                         let rect = CGRect(
                             x: min(start.x, end.x),
                             y: min(start.y, end.y),
                             width: abs(start.x - end.x),
                             height: abs(start.y - end.y)
                         )
-
-                        Path { path in
-                            path.addRect(rect)
-                        }
-                        .stroke(Color.blue, lineWidth: 2)
-                        .background(Color.blue.opacity(0.2))
+                        Path { $0.addRect(rect) }
+                            .stroke(Color.blue, lineWidth: 2)
+                            .background(Color.blue.opacity(0.2))
                     }
                     .allowsHitTesting(false)
                 }
-
-
-
 
                 if isGridVisible {
                     GridOverlay(isGridVisible: $isGridVisible, mapRegion: mapData.region)
                 }
 
-
-                
-                VStack {
-                    Spacer() // Push everything down
-
-                    // Center Button (bottom-right)
-                    HStack {
-                        Spacer()
-                        VStack {
-                            // Grid Toggle Button - ABOVE Center Button
-                            Button(action: { isGridVisible.toggle() }) {
-                                Image(systemName: isGridVisible ? "checkmark.square.fill" : "square")
-                                    .font(.title)
-                                    .foregroundColor(.blue)
-                                    .padding()
-                            }
-                            .background(Color.white.opacity(0.7))
-                            .clipShape(Circle())
-                            .padding(.bottom, 10)  // Moves it above the center button
-
-                            // Center Button (BLUE)
-                            Button(action: { withAnimation { toggleMapLock() } }) {
-                                Image(systemName: isMapLocked ? "location.north.fill" : "scope")
-                                    .font(.title2)
-                                    .padding()
-                                    .background(Color.blue)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
-                            }
-                            .id(isMapLocked)
-                            
-                            // Setting Boundaries (Green)
-                            Button(action: {
-                                isDrawingBoundary.toggle()
-                                dragStartPoint = nil
-                                dragEndPoint = nil
-                            }) {
-                                Text(isDrawingBoundary ? "Cancel Drawing" : "Draw Boundary")
-                                    .padding()
-                                    .background(isDrawingBoundary ? Color.red : Color.green)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
-                            }
-
-                            
-                        }
-                        .padding(.trailing, 15) // Keep aligned to the right
-                        .padding(.bottom, 15)
-                    }
-                }
-
-
+                controlsOverlay
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
                     ForEach(tagDataWatcher.tagLocations, id: \.id) { tag in
@@ -234,11 +125,8 @@ struct MapView: View {
                                 .resizable()
                                 .frame(width: 40, height: 40)
                                 .foregroundColor(.blue)
-                                .onTapGesture {
-                                    zoomToTag(tag: tag)
-                                }
-                            Text(tag.name)
-                                .font(.caption)
+                                .onTapGesture { zoomToTag(tag: tag) }
+                            Text(tag.name).font(.caption)
                         }
                         .padding(.horizontal, 8)
                     }
@@ -246,35 +134,138 @@ struct MapView: View {
                 .padding()
             }
             .background(Color(UIColor.systemGray6))
+            .frame(maxWidth: .infinity) // ✅ force full width
+        }
+        .onReceive(updateTimer) { _ in
+            tagDataWatcher.startUpdating()
+            anchorDataWatcher.startUpdating()
+        }
+        .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)) {
+            detectMapMovement($0.coordinate)
         }
         .onAppear {
-            print("🔓 Initializing map in unlocked state.")
             tagDataWatcher.startUpdating()
-            if anchorDataWatcher.anchors.isEmpty {
-                anchorDataWatcher.startUpdating()
-            }
-            if anchorDataWatcher.anchors.isEmpty {
-                tagDataWatcher.startUpdating()
-            }
-            previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)  // Initialize last coordinate
+            if anchorDataWatcher.anchors.isEmpty { anchorDataWatcher.startUpdating() }
+            previousCenterCoordinateWrapper = CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)
             fetchSavedBoundary()
-
         }
-
         .alert("Anchor Options", isPresented: $showAnchorOptions) {
             TextField("Anchor Name", text: $anchorName)
             TextField("Latitude", value: $anchorLatitude, format: .number)
             TextField("Longitude", value: $anchorLongitude, format: .number)
-            
             Button("Save Changes") { updateAnchor() }
             Button("Delete", role: .destructive) { deleteAnchor() }
             Button("Cancel", role: .cancel) {}
         }
-        
-        .alert("Tag Location Info", isPresented: $showTagInfo, presenting: selectedTag) { tag in
-            Button("OK", role: .cancel) { }
+        .alert("Tag Location Info", isPresented: $showTagInfo, presenting: selectedTag) { _ in
+            Button("OK", role: .cancel) {}
         } message: { tag in
-            Text("Name: \(tag.name)\nLatitude: \(tag.latitude)\nLongitude: \(tag.longitude)\nAltitude: \(tag.altitude ?? 0.0) m")
+            Text("Name: \(tag.name)\nLat: \(tag.latitude)\nLon: \(tag.longitude)\nAlt: \(tag.altitude ?? 0.0)m")
+        }
+    }
+
+    private var controlsOverlay: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                VStack {
+                    Button(action: { isGridVisible.toggle() }) {
+                        Image(systemName: isGridVisible ? "checkmark.square.fill" : "square")
+                            .font(.title).foregroundColor(.blue).padding()
+                    }
+                    .background(Color.white.opacity(0.7)).clipShape(Circle()).padding(.bottom, 10)
+
+                    Button(action: { withAnimation { toggleMapLock() } }) {
+                        Image(systemName: isMapLocked ? "location.north.fill" : "scope")
+                            .font(.title2).padding().background(Color.blue)
+                            .foregroundColor(.white).cornerRadius(8)
+                    }
+
+                    Button(action: {
+                        isDrawingBoundary.toggle()
+                        dragStartPoint = nil
+                        dragEndPoint = nil
+                    }) {
+                        Image(systemName: isDrawingBoundary ? "xmark.circle.fill" : "pencil.tip.crop.circle")
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(isDrawingBoundary ? Color.red : Color.green)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
+                            .accessibilityLabel(isDrawingBoundary ? "Cancel Drawing" : "Draw Boundary")
+                    }
+                }
+                .padding(.trailing, 15)
+                .padding(.bottom, 15)
+            }
+        }
+    }
+
+    private var mapAnnotations: [MapAnnotationItem] {
+        var annotations: [MapAnnotationItem] = []
+
+        if let userLocation = userLocationManager.userLocation {
+            annotations.append(MapAnnotationItem(
+                id: "user",
+                type: .user,
+                coordinate: userLocation.coordinate,
+                name: "User",
+                bareTag: nil
+            ))
+        }
+
+        annotations += tagDataWatcher.tagLocations.map { tag in
+            MapAnnotationItem(
+                id: tag.id,
+                type: .tag,
+                coordinate: tag.coordinate,
+                name: tag.name,
+                bareTag: tag  // ✅ This fixes the "missing bareTag" error
+            )
+        }
+
+        annotations += anchorDataWatcher.anchors.map { anchor in
+            MapAnnotationItem(
+                id: anchor.id,
+                type: .anchor,
+                coordinate: CLLocationCoordinate2D(latitude: anchor.latitude, longitude: anchor.longitude),
+                name: anchor.name,
+                bareTag: nil  // Anchors don’t use this
+            )
+        }
+
+        return annotations
+    }
+
+
+    private func annotationView(for item: MapAnnotationItem) -> some View {
+        switch item.type {
+        case .user:
+            return AnyView(Circle().fill(Color.blue).frame(width: 10, height: 10))
+        case .tag:
+            return AnyView(Image(systemName: "mappin.circle.fill")
+                .foregroundColor(.red)
+                .font(.title)
+                .onTapGesture {
+                    selectedTag = tagDataWatcher.tagLocations.first(where: {
+                        $0.coordinate.latitude == item.coordinate.latitude &&
+                        $0.coordinate.longitude == item.coordinate.longitude
+                    })
+                    showTagInfo = true
+                })
+        case .anchor:
+            return AnyView(Image(systemName: "flag.fill")
+                .foregroundColor(.green)
+                .font(.title)
+                .onLongPressGesture {
+                    selectedAnchor = item
+                    anchorName = item.name ?? ""
+                    anchorLatitude = item.coordinate.latitude
+                    anchorLongitude = item.coordinate.longitude
+                    showAnchorOptions = true
+                })
         }
     }
 
@@ -338,42 +329,16 @@ struct MapView: View {
 
     private func zoomToTag(tag: BareTag) {
         print("🔓 Unlocking map and zooming to tag: \(tag.name)")
-        isMapLocked = false
+        isMapLocked = true // ⛔ Temporarily lock to suppress reactivity
+
         centerCoordinateWrapper.region.center = CLLocationCoordinate2D(latitude: tag.latitude, longitude: tag.longitude)
         centerCoordinateWrapper.region.span = MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            isMapLocked = false // 🔓 Unlock after a moment to allow user movement again
+        }
     }
 
-    private var mapAnnotations: [MapAnnotationItem] {
-        var annotations: [MapAnnotationItem] = []
-
-        if let userLocation = userLocationManager.userLocation {
-            annotations.append(MapAnnotationItem(
-                id: "user",
-                type: .user,
-                coordinate: userLocation.coordinate,
-                name: "User"))
-        }
-
-        for tag in tagDataWatcher.tagLocations {
-            annotations.append(MapAnnotationItem(
-                id: tag.id,
-                type: .tag,
-                coordinate: tag.coordinate,
-                name: tag.name)
-            )
-        }
-
-        for anchor in anchorDataWatcher.anchors {
-            annotations.append(MapAnnotationItem(
-                id: anchor.id,
-                type: .anchor,
-                coordinate: CLLocationCoordinate2D(latitude: anchor.latitude, longitude: anchor.longitude),
-                name: anchor.name)
-            )
-        }
-
-        return annotations
-    }
 
 
     func updateAnchor() {
@@ -603,7 +568,9 @@ struct MapAnnotationItem: Identifiable {
     let type: AnnotationType
     let coordinate: CLLocationCoordinate2D
     let name: String?
+    let bareTag: BareTag?  // Add this line only if you use it
 }
+
 
 struct EquatableCoordinateRegion: Equatable {
     var region: MKCoordinateRegion
