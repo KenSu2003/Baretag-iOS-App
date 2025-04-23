@@ -35,6 +35,9 @@ struct MapViewRepresentable: UIViewRepresentable {
                 view?.annotation = annotation
             }
 
+            view?.clusteringIdentifier = nil // Disable clustering
+            view?.displayPriority = .required // Ensure visibility
+
             switch customAnnotation.type {
             case .user:
                 view?.glyphImage = UIImage(systemName: "circle.fill")
@@ -51,6 +54,8 @@ struct MapViewRepresentable: UIViewRepresentable {
 
             return view
         }
+
+
 
 
 
