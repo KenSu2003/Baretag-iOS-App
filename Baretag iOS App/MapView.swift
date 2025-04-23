@@ -163,11 +163,16 @@ struct MapView: View {
             tagDataWatcher.startUpdating()
             anchorDataWatcher.startUpdating()
 
-            if let tag = tagDataWatcher.tagLocations.first(where: { $0.status == false }) {
-                if !seenOutOfBoundsTags.contains(tag.id) {
-                    outOfBoundsTag = tag
-                    showOutOfBoundsAlert = true
-                    seenOutOfBoundsTags.insert(tag.id)
+            for tag in tagDataWatcher.tagLocations {
+                if tag.status == false {
+                    if !seenOutOfBoundsTags.contains(tag.id) {
+                        outOfBoundsTag = tag
+                        showOutOfBoundsAlert = true
+                        seenOutOfBoundsTags.insert(tag.id)
+                    }
+                } else {
+                    // Clear the tag from seen list if it has returned in-bounds
+                    seenOutOfBoundsTags.remove(tag.id)
                 }
             }
         }
