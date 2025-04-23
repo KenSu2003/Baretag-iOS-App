@@ -46,6 +46,8 @@ struct MapView: View {
     @State private var dragStartPoint: CGPoint?
     @State private var dragEndPoint: CGPoint?
     @State private var boundaryCoordinates: [CLLocationCoordinate2D] = []
+    @State private var mapViewRef: MKMapView? = nil
+
 
     private var updateTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
@@ -67,7 +69,8 @@ struct MapView: View {
                         anchorLatitude = anchor.coordinate.latitude
                         anchorLongitude = anchor.coordinate.longitude
                         showAnchorOptions = true
-                    }
+                    },
+                    mapViewRef: $mapViewRef
                 )
 
                 if isDrawingBoundary {
@@ -452,13 +455,20 @@ struct MapView: View {
             CGPoint(x: min(start.x, end.x), y: max(start.y, end.y))  // bottom-left
         ]
 
-        let mapView = MKMapView(frame: UIScreen.main.bounds)
-        mapView.setRegion(centerCoordinateWrapper.region, animated: false)
+//        let mapView = MKMapView(frame: UIScreen.main.bounds)
+//        mapView.setRegion(centerCoordinateWrapper.region, animated: false)
+//
+//        let boundaryCoords = screenPoints.map { point in
+//            mapView.convert(point, toCoordinateFrom: mapView)
+//        }
+        
+        guard let realMapView = mapViewRef else { return }
 
         let boundaryCoords = screenPoints.map { point in
-            mapView.convert(point, toCoordinateFrom: mapView)
+            realMapView.convert(point, toCoordinateFrom: realMapView)
         }
 
+        
         let points = boundaryCoords.map { ["lat": $0.latitude, "lon": $0.longitude] }
 
         let body: [String: Any] = ["points": points]

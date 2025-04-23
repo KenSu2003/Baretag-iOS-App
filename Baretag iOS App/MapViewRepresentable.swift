@@ -5,9 +5,12 @@ struct MapViewRepresentable: UIViewRepresentable {
     @Binding var centerRegion: MKCoordinateRegion
     @Binding var isLocked: Bool
     @Binding var polygonCoords: [CLLocationCoordinate2D]
+
     var annotations: [MapAnnotationItem]
     var onTagTapped: (BareTag) -> Void
     var onAnchorLongPressed: (MapAnnotationItem) -> Void
+    
+    @Binding var mapViewRef: MKMapView?
 
     class Coordinator: NSObject, MKMapViewDelegate {
         var parent: MapViewRepresentable
@@ -84,7 +87,7 @@ struct MapViewRepresentable: UIViewRepresentable {
             return MKOverlayRenderer()
         }
 
-        // MARK: 🔧 Render symbol as fully colored image
+        // Render symbol as fully colored image
         private func renderSymbol(systemName: String, color: UIColor, pointSize: CGFloat) -> UIImage? {
             let config = UIImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
             guard let symbolImage = UIImage(systemName: systemName)?.applyingSymbolConfiguration(config) else {
@@ -106,6 +109,9 @@ struct MapViewRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
+        DispatchQueue.main.async {
+            self.mapViewRef = mapView
+        }
         return mapView
     }
 
@@ -137,7 +143,7 @@ struct MapViewRepresentable: UIViewRepresentable {
     }
 }
 
-// MARK: - Custom Annotation Class
+// Custom Annotation Class
 class CustomAnnotation: NSObject, MKAnnotation {
     let coordinate: CLLocationCoordinate2D
     let type: AnnotationType
@@ -151,23 +157,12 @@ class CustomAnnotation: NSObject, MKAnnotation {
     }
 }
 
-// MARK: - Polygon Comparison
+// Polygon Comparison
 extension MKPolygon {
     func coordinatesEqual(to coords: [CLLocationCoordinate2D]) -> Bool {
         guard self.pointCount == coords.count else { return false }
         var polygonCoords = [CLLocationCoordinate2D](repeating: kCLLocationCoordinate2DInvalid, count: self.pointCount)
         self.getCoordinates(&polygonCoords, range: NSRange(location: 0, length: self.pointCount))
         return zip(polygonCoords, coords).allSatisfy { $0.latitude == $1.latitude && $0.longitude == $1.longitude }
-    }
-}
-
-func renderColoredSymbol(systemName: String, color: UIColor, pointSize: CGFloat) -> UIImage? {
-    let config = UIImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
-    guard let baseImage = UIImage(systemName: systemName, withConfiguration: config) else { return nil }
-
-    let renderer = UIGraphicsImageRenderer(size: baseImage.size)
-    return renderer.image { context in
-        color.set()
-        baseImage.draw(at: .zero)
     }
 }

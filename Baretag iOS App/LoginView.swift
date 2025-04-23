@@ -14,7 +14,7 @@ struct LoginView: View {
     @State private var errorMessage: String?
     @State private var showRegister = false
 
-    // ✅ Store user_id globally using `UserDefaults`
+    // Store user_id globally using `UserDefaults`
     @AppStorage("user_id") private var userID: Int?
 
     var body: some View {
