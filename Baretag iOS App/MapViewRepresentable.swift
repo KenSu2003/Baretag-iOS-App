@@ -47,8 +47,10 @@ struct MapViewRepresentable: UIViewRepresentable {
                 view?.markerTintColor = .blue
 
             case .tag:
-                view?.glyphImage = UIImage(systemName: "mappin.circle.fill")
-                view?.markerTintColor = .red
+                if let tag = customAnnotation.bareTag {
+                    view?.glyphImage = UIImage(systemName: "mappin.circle.fill")
+                    view?.markerTintColor = getColorForTag(id: tag.id)
+                }
 
             case .anchor:
                 view?.glyphImage = UIImage(systemName: "flag.fill")

@@ -13,6 +13,19 @@ import SwiftUI
 import MapKit
 import Combine
 
+var tagColorMap: [String: UIColor] = [:]
+
+func getColorForTag(id: String) -> UIColor {
+    if let color = tagColorMap[id] {
+        return color
+    } else {
+        let colors: [UIColor] = [.systemRed, .systemBlue, .systemOrange, .systemGreen, .systemPurple, .systemTeal, .systemYellow, .systemPink]
+        let newColor = colors.randomElement() ?? .systemGray
+        tagColorMap[id] = newColor
+        return newColor
+    }
+}
+
 struct MapView: View {
 
     @StateObject private var tagDataWatcher = TagDataWatcher(useLocalFile: false)
@@ -127,7 +140,7 @@ struct MapView: View {
                             Image(systemName: "tag.circle.fill")
                                 .resizable()
                                 .frame(width: 40, height: 40)
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color(getColorForTag(id: tag.id)))
                                 .onTapGesture { zoomToTag(tag: tag) }
                             Text(tag.name).font(.caption)
                         }
@@ -137,7 +150,8 @@ struct MapView: View {
                 .padding()
             }
             .background(Color(UIColor.systemGray6))
-            .frame(maxWidth: .infinity) // ✅ force full width
+            .frame(maxWidth: .infinity)
+            
         }
         .onReceive(updateTimer) { _ in
             tagDataWatcher.startUpdating()
@@ -211,6 +225,7 @@ struct MapView: View {
     }
 
     private var mapAnnotations: [MapAnnotationItem] {
+        let color = UIColor.systemRed // fallback
         var annotations: [MapAnnotationItem] = []
 
         if let userLocation = userLocationManager.userLocation {
@@ -219,19 +234,25 @@ struct MapView: View {
                 type: .user,
                 coordinate: userLocation.coordinate,
                 name: "User",
-                bareTag: nil
+                bareTag: nil,
+                color: color
             ))
         }
 
         annotations += tagDataWatcher.tagLocations.map { tag in
-            MapAnnotationItem(
+            let color = getColorForTag(id: tag.id)
+
+            return MapAnnotationItem(
                 id: tag.id,
                 type: .tag,
                 coordinate: tag.coordinate,
                 name: tag.name,
-                bareTag: tag  // ✅ This fixes the "missing bareTag" error
+                bareTag: tag,
+                color: color
             )
         }
+
+
 
         annotations += anchorDataWatcher.anchors.map { anchor in
             MapAnnotationItem(
@@ -239,7 +260,8 @@ struct MapView: View {
                 type: .anchor,
                 coordinate: CLLocationCoordinate2D(latitude: anchor.latitude, longitude: anchor.longitude),
                 name: anchor.name,
-                bareTag: nil  // Anchors don’t use this
+                bareTag: nil,  // Anchors don’t use this
+                color: UIColor.green
             )
         }
 
@@ -454,13 +476,6 @@ struct MapView: View {
             CGPoint(x: max(start.x, end.x), y: max(start.y, end.y)), // bottom-right
             CGPoint(x: min(start.x, end.x), y: max(start.y, end.y))  // bottom-left
         ]
-
-//        let mapView = MKMapView(frame: UIScreen.main.bounds)
-//        mapView.setRegion(centerCoordinateWrapper.region, animated: false)
-//
-//        let boundaryCoords = screenPoints.map { point in
-//            mapView.convert(point, toCoordinateFrom: mapView)
-//        }
         
         guard let realMapView = mapViewRef else { return }
 
@@ -557,8 +572,8 @@ struct CLLocationCoordinate2DWrapper: Equatable {
     }
 }
 
-// Updated BareTag struct to include map coordinates
-struct BareTag: Identifiable, Codable, Equatable {
+// BareTag struct
+struct BareTag: Identifiable, Equatable, Codable {
     let id: String
     let name: String
     let latitude: Double
@@ -569,7 +584,20 @@ struct BareTag: Identifiable, Codable, Equatable {
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
+
+    // 👇 Do NOT include this in the Codable conformance
+    var assignedColor: UIColor? {
+        getColorForTag(id: id) // pulled dynamically from map
+    }
+
+    // If you're using SwiftUI Color in the scroll view:
+    var swiftUIColor: Color {
+        Color(assignedColor ?? .gray)
+    }
 }
+
+
+
 
 // Enum to distinguish between user and tag annotations
 enum AnnotationType {
@@ -583,6 +611,7 @@ struct MapAnnotationItem: Identifiable {
     let coordinate: CLLocationCoordinate2D
     let name: String?
     let bareTag: BareTag?  // Add this line only if you use it
+    let color: UIColor? // ← NEW: store color here
 }
 
 
