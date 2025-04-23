@@ -143,6 +143,10 @@ struct MapView: View {
         .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)) {
             detectMapMovement($0.coordinate)
         }
+        .onChange(of: centerCoordinateWrapper) { newWrapper in
+            mapData.region = newWrapper.region
+        }
+
         .onAppear {
             tagDataWatcher.startUpdating()
             if anchorDataWatcher.anchors.isEmpty { anchorDataWatcher.startUpdating() }

@@ -56,9 +56,6 @@ struct MapViewRepresentable: UIViewRepresentable {
         }
 
 
-
-
-
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
             guard let annotation = view.annotation as? CustomAnnotation else { return }
 
