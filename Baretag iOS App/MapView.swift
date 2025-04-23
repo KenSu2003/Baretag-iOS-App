@@ -60,6 +60,12 @@ struct MapView: View {
     @State private var dragEndPoint: CGPoint?
     @State private var boundaryCoordinates: [CLLocationCoordinate2D] = []
     @State private var mapViewRef: MKMapView? = nil
+    @State private var outOfBoundsTag: BareTag?
+    @State private var showOutOfBoundsAlert = false
+    @State private var seenOutOfBoundsTags: Set<String> = []
+
+
+    
 
 
     private var updateTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
@@ -156,7 +162,16 @@ struct MapView: View {
         .onReceive(updateTimer) { _ in
             tagDataWatcher.startUpdating()
             anchorDataWatcher.startUpdating()
+
+            if let tag = tagDataWatcher.tagLocations.first(where: { $0.status == false }) {
+                if !seenOutOfBoundsTags.contains(tag.id) {
+                    outOfBoundsTag = tag
+                    showOutOfBoundsAlert = true
+                    seenOutOfBoundsTags.insert(tag.id)
+                }
+            }
         }
+
         .onChange(of: CLLocationCoordinate2DWrapper(coordinate: centerCoordinateWrapper.region.center)) {
             detectMapMovement($0.coordinate)
         }
@@ -183,6 +198,14 @@ struct MapView: View {
         } message: { tag in
             Text("Name: \(tag.name)\nLat: \(tag.latitude)\nLon: \(tag.longitude)\nAlt: \(tag.altitude ?? 0.0)m")
         }
+        .alert("⚠️ Tag Out of Bounds", isPresented: $showOutOfBoundsAlert, presenting: outOfBoundsTag) { tag in
+            Button("OK", role: .cancel) {
+                // Optional: Do something on dismiss
+            }
+        } message: { tag in
+            Text("Tag '\(tag.name)' is outside the designated area.")
+        }
+
     }
 
     private var controlsOverlay: some View {
