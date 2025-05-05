@@ -15,12 +15,15 @@
 
 ## 📱 Screenshots
 
-### 👤 Authentication  
-Login and registration pages for user access.
+## 📱 Screenshots
+
+### 👤 User Access (Authentication & Session Management)  
+Login, registration, and logout functionality for user account management.
 
 <p float="left">
   <img src="Screenshots/Login%20Page.png" width="200" height="400">
   <img src="Screenshots/Registration%20Page.png" width="200" height="400">
+  <img src="Screenshots/Logout%20Page.png" width="200" height="400">
 </p>
 
 ---
@@ -58,15 +61,43 @@ Receive alerts and configure boundary zones.
   <img src="Screenshots/Set%20Alert%20Bound.png" width="200" height="400">
 </p>
 
+
 ---
 
-### 🚪 Session Management  
-Logout interface for account management.
+### 📡 Anchor Management  
+Manage anchor locations and metadata.
 
 <p float="left">
-  <img src="Screenshots/Logout%20Page.png" width="200" height="400">
+  <img src="Screenshots/Anchor%20Locator.png" width="200" height="400">
+  <img src="Screenshots/Anchor%20Editor.png" width="200" height="400">
 </p>
 
+---
+
+### 🗺️ Tag Tracking  
+View tag positions, detailed coordinates, and grid overlays.
+
+<p float="left">
+  <img src="Screenshots/Map%20View.png" width="200" height="400">
+  <img src="Screenshots/Grid%20Overlay.png" width="200" height="400">
+</p>
+
+<p float="left">
+  <img src="Screenshots/Tag%20Location%20Info.png" width="200" height="400">
+  <img src="Screenshots/User%20GPS%20Location.png" width="200" height="400">
+</p>
+
+---
+
+### 🚨 Alerts & Boundaries  
+Receive alerts and configure boundary zones.
+
+<p float="left">
+  <img src="Screenshots/Out%20of%20Bounds%20Alert.png" width="200" height="400">
+  <img src="Screenshots/Set%20Alert%20Bound.png" width="200" height="400">
+</p>
+
+---
 
 ## 🛠 Installation  
 
