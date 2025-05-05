@@ -13,31 +13,69 @@
 - 🔋 **Battery & Status Monitoring** – Check the battery level of your BareTag.  
 - 🛠 **User-Friendly Interface** – Simple and intuitive design for easy use.  
 
-## 📱 Screenshots  
+## 📱 Screenshots
 
-**Anchor Locator**
+### 🔐 Login Page
+Displays the login interface where users can securely access the BareTag system.
 
-<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.19.51.png" width="200" height="400">
+![Login Page](Screenshots/Login%20Page.png)
 
-**Tag Locator**
+---
 
-<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.19.56.png" width="200" height="400">
+### 🆕 Registration Page
+Allows new users to create an account with a username and password.
 
-**Map**
+![Registration Page](Screenshots/Registration%20Page.png)
 
-<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.20.00.png" width="200" height="400">
+---
 
-**Dynamic Grid Overlay**
+### 📍 Anchor Locator
+Fetch and register anchor coordinates via GPS and send them to the server.
 
-<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.20.09.png" width="200" height="400">
+![Anchor Locator](Screenshots/Anchor%20Locator.png)
 
-**Location Centering**
+---
 
-<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.20.16.png" width="200" height="400">
+### 🛠️ Anchor Editor
+Edit existing anchor names and coordinates or delete anchors from the map.
 
-**Logout Page**
+![Anchor Editor](Screenshots/Anchor%20Editor.png)
 
-<img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Screenshots/Simulator%20Screenshot%20-%20iPhone%2016%20Pro%20-%202025-04-02%20at%2021.20.20.png" width="200" height="400">
+---
+
+### 🗺️ Map View with Tools
+Visual display of tools (tags) overlaid on a live map. Each tool is color-coded.
+
+![Map View](Screenshots/Map%20View.png)
+
+---
+
+### 🧭 Grid Overlay for Positioning
+Toggleable grid overlay for precise tag positioning within defined zones.
+
+![Grid Overlay](Screenshots/Grid%20Overlay.png)
+
+---
+
+### 🚫 Out-of-Bounds Alert
+Alert dialog notifying the user when a tag exits the designated tracking area.
+
+![Out of Bounds Alert](Screenshots/Out%20of%20Bounds%20Alert.png)
+
+---
+
+### ⚙️ Set Alert Boundaries
+Interactive interface to define and adjust the boundary area for tag movement alerts.
+
+![Set Alert Bound](Screenshots/Set%20Alert%20Bound.png)
+
+---
+
+### 👤 Logout Page
+Simple UI for logging out of the user's account.
+
+![Logout Page](Screenshots/Logout%20Page.png)
+
 
 ## 🛠 Installation  
 
