@@ -90,11 +90,11 @@ To run the app locally:
    ```
 2. Open in Xcode
   
-  Open the .xcodeproj or .xcworkspace file with Xcode and run on a simulator or connected iOS device.
+* Open the .xcodeproj or .xcworkspace file with Xcode and run on a simulator or connected iOS device.
 
 3. Build and Run
   
-  Select a device target and press ▶️ to build and launch the app.
+* Select a device target and press ▶️ to build and launch the app.
 
 
 Example dataTag.json
