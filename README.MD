@@ -15,8 +15,6 @@
 
 ## 📱 Screenshots
 
-## 📱 Screenshots
-
 ### 👤 User Access (Authentication & Session Management)  
 Login, registration, and logout functionality for user account management.
 
@@ -97,7 +95,6 @@ Receive alerts and configure boundary zones.
   <img src="Screenshots/Set%20Alert%20Bound.png" width="200" height="400">
 </p>
 
----
 
 ## 🛠 Installation  
 
