@@ -1,37 +1,38 @@
-
-# BareTag iOS App  
+# 📦 BareTag iOS App  
 
 <img src="https://github.com/KenSu2003/Baretag-iOS-App/blob/main/Baretag%20iOS%20App/Assets.xcassets/AppIcon.appiconset/Screenshot%202024-12-01%20155244.png" width="200" height="200">
 
-**BareTag** is an iOS application designed to work with the BareTag tracking system. It helps users keep track of their valuable items using UWB and BLE technology.  
+**BareTag** is an iOS application designed to work with the BareTag tracking system. It helps users keep track of valuable tools and assets using UWB (Ultra-Wideband) and BLE (Bluetooth Low Energy) technology. BareTag offers real-time positioning, smart alerts, and a user-friendly interface to improve asset security and visibility — especially for construction sites and field teams.
+
+---
 
 ## 🚀 Features  
 
 - 📍 **Track & Locate**  
-  Real-time location tracking of tagged tools within a designated UWB zone and beyond via the Apple Find My network.
+  Real-time location tracking of tagged tools within a UWB zone and beyond via Apple’s Find My network.
 
 - 🚧 **Custom Geo-Fencing**  
-  Define virtual boundaries and receive alerts when a tag moves outside the designated area.
+  Define boundaries and get alerts when tags move outside the designated area.
 
 - 🔔 **Out-of-Bounds Alerts**  
-  Instant pop-up warnings when tools exit the safe zone — ideal for preventing loss or theft on job sites.
+  Get instant alerts when a tool exits the permitted tracking zone.
 
 - 🗺 **Interactive Map Integration**  
-  Visualize tool locations, anchor zones, and movement history on a live map with dynamic grid overlays.
+  Visualize anchors, tags, and movement in real-time on a dynamic grid overlaid map.
 
 - 🧭 **Detailed Tag Location Info**  
-  View exact latitude, longitude, and altitude data for each tag at a glance.
+  Access full GPS metadata — including latitude, longitude, and altitude — per tool.
 
 - 👤 **Secure User Accounts**  
-  Login, register, and manage user sessions securely through the app.
+  Register, log in, and manage your session securely.
 
 - ⚙️ **Anchor Management**  
-  Set, update, and remove anchor points used to define tracking boundaries and triangulate tag positions.
+  Add, edit, or delete anchors to define tracking zones with precision.
 
 - 🛠 **User-Friendly Interface**  
-  Clean, intuitive UI for seamless navigation across tracking, tagging, and account management.
+  Clean, intuitive navigation across tagging, localization, and settings.
 
-
+---
 
 ## 📱 Screenshots
 
@@ -76,6 +77,7 @@ Receive alerts and configure boundary zones.
   <img src="Screenshots/Set%20Alert%20Bound.png" width="200" height="400">
 </p>
 
+---
 
 ## 🛠 Installation  
 
@@ -84,8 +86,13 @@ To run the app locally:
 1. **Clone the repository**  
    ```sh
    git clone https://github.com/KenSu2003/Baretag-iOS-App.git
+
    ```
-2. Run on Xcode
+2. Open in Xcode
+  Open the .xcodeproj or .xcworkspace file with Xcode and run on a simulator or connected iOS device.
+
+3. Build and Run
+  Select a device target and press ▶️ to build and launch the app.
 
 
 Example dataTag.json
