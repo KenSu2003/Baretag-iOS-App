@@ -77,27 +77,6 @@ Receive alerts and configure boundary zones.
 </p>
 
 
----
-
-### 📡 Anchor Management  
-Manage anchor locations and metadata.
-
-<p float="left">
-  <img src="Screenshots/Anchor%20Locator.png" width="200" height="400">
-  <img src="Screenshots/Anchor%20Editor.png" width="200" height="400">
-</p>
-
----
-
-### 🚨 Alerts & Boundaries  
-Receive alerts and configure boundary zones.
-
-<p float="left">
-  <img src="Screenshots/Out%20of%20Bounds%20Alert.png" width="200" height="400">
-  <img src="Screenshots/Set%20Alert%20Bound.png" width="200" height="400">
-</p>
-
-
 ## 🛠 Installation  
 
 To run the app locally:  
