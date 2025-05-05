@@ -75,9 +75,6 @@ View tag positions, detailed coordinates, and grid overlays.
 <p float="left">
   <img src="Screenshots/Map%20View.png" width="200" height="400">
   <img src="Screenshots/Grid%20Overlay.png" width="200" height="400">
-</p>
-
-<p float="left">
   <img src="Screenshots/Tag%20Location%20Info.png" width="200" height="400">
   <img src="Screenshots/User%20GPS%20Location.png" width="200" height="400">
 </p>
