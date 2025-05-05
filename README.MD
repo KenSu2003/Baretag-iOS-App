@@ -15,57 +15,57 @@
 
 ## 📱 Screenshots
 
-### 🔐 Login Page  
-Displays the login interface where users can securely access the BareTag system.  
-<img src="Screenshots/Login%20Page.png" width="200" height="400">
+### 👤 Authentication  
+Login and registration pages for user access.
+
+<p float="left">
+  <img src="Screenshots/Login%20Page.png" width="200" height="400">
+  <img src="Screenshots/Registration%20Page.png" width="200" height="400">
+</p>
 
 ---
 
-### 🆕 Registration Page  
-Allows new users to create an account with a username and password.  
-<img src="Screenshots/Registration%20Page.png" width="200" height="400">
+### 📡 Anchor Management  
+Manage anchor locations and metadata.
+
+<p float="left">
+  <img src="Screenshots/Anchor%20Locator.png" width="200" height="400">
+  <img src="Screenshots/Anchor%20Editor.png" width="200" height="400">
+</p>
 
 ---
 
-### 📍 Anchor Locator  
-Fetch and register anchor coordinates via GPS and send them to the server.  
-<img src="Screenshots/Anchor%20Locator.png" width="200" height="400">
+### 🗺️ Tag Tracking  
+View tag positions, detailed coordinates, and grid overlays.
+
+<p float="left">
+  <img src="Screenshots/Map%20View.png" width="200" height="400">
+  <img src="Screenshots/Grid%20Overlay.png" width="200" height="400">
+</p>
+
+<p float="left">
+  <img src="Screenshots/Tag%20Location%20Info.png" width="200" height="400">
+  <img src="Screenshots/User%20GPS%20Location.png" width="200" height="400">
+</p>
 
 ---
 
-### 🛠️ Anchor Editor  
-Edit existing anchor names and coordinates or delete anchors from the map.  
-<img src="Screenshots/Anchor%20Editor.png" width="200" height="400">
+### 🚨 Alerts & Boundaries  
+Receive alerts and configure boundary zones.
+
+<p float="left">
+  <img src="Screenshots/Out%20of%20Bounds%20Alert.png" width="200" height="400">
+  <img src="Screenshots/Set%20Alert%20Bound.png" width="200" height="400">
+</p>
 
 ---
 
-### 🗺️ Map View with Tools  
-Visual display of tools (tags) overlaid on a live map. Each tool is color-coded.  
-<img src="Screenshots/Map%20View.png" width="200" height="400">
+### 🚪 Session Management  
+Logout interface for account management.
 
----
-
-### 🧭 Grid Overlay for Positioning  
-Toggleable grid overlay for precise tag positioning within defined zones.  
-<img src="Screenshots/Grid%20Overlay.png" width="200" height="400">
-
----
-
-### 🚫 Out-of-Bounds Alert  
-Alert dialog notifying the user when a tag exits the designated tracking area.  
-<img src="Screenshots/Out%20of%20Bounds%20Alert.png" width="200" height="400">
-
----
-
-### ⚙️ Set Alert Boundaries  
-Interactive interface to define and adjust the boundary area for tag movement alerts.  
-<img src="Screenshots/Set%20Alert%20Bound.png" width="200" height="400">
-
----
-
-### 👤 Logout Page  
-Simple UI for logging out of the user's account.  
-<img src="Screenshots/Logout%20Page.png" width="200" height="400">
+<p float="left">
+  <img src="Screenshots/Logout%20Page.png" width="200" height="400">
+</p>
 
 
 ## 🛠 Installation  
