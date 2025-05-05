@@ -77,7 +77,8 @@ class TagDataWatcher: ObservableObject {
                 let decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
 
                 DispatchQueue.main.async {
-                    // ✅ Only update if data actually changed
+                    
+                    // Only update if data changes
                     if self.tagLocations != decodedResponse.tags_location {
                         print("🔄 Updating tags: Data has changed.")
                         self.tagLocations = decodedResponse.tags_location
